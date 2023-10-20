@@ -14,10 +14,10 @@ if [ -f $FF ]
 then
 echo 'FullFlash found, generating vkp without recovery info'
 FF_EXISTS=1
-wine elf2vkp.exe "${directory}/ELFLoader.elf" "${directory}/ElfLoader3.vkp" "${FF}" &> /dev/null
+wine elf2vkp.exe "${directory}/ElfLoader.elf" "${directory}/ElfLoader3.vkp" "${FF}" &> /dev/null
 else
 echo 'FullFlash not found, generating vkp without recovery info'
-wine elf2vkp.exe "${directory}/ELFLoader.elf" "${directory}/ElfLoader3.vkp" &> /dev/null
+wine elf2vkp.exe "${directory}/ElfLoader.elf" "${directory}/ElfLoader3.vkp" &> /dev/null
 fi
 
 echo ";"$phone > $outname
@@ -46,5 +46,5 @@ echo "#pragma disable old_equal_ff" >> $outname
 echo "+0" >> $outname
 
 rm "${directory}/ElfLoader3.vkp"
-rm "${directory}/ELFLoader.elf"
+rm "${directory}/ElfLoader.elf"
 exit 0
