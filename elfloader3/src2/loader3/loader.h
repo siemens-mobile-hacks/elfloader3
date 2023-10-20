@@ -10,19 +10,9 @@
 #define __LOADER_H__
 
 //#define _test_linux
-#define __ZVOVA
-//#define __GANSTER
 
-#ifdef __GANSTER
-#include <swilib.h>
-#endif
-
-#ifdef __ZVOVA
+#ifndef _test_linux
 #include <inc/swilib.h>
-#define fopen open
-#define fread read
-#define fwrite write
-#define fclose close
 #endif
 
 #ifdef _test_linux

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 args=$@
 founded_elfs=$(find ./ -name "ELF*.elf")

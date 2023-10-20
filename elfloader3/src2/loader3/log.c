@@ -12,7 +12,7 @@ __arch void ep_log(Elf32_Exec *ex, const char *data, int size)
     int log_size;
     TDate td;
     TTime tt;
-    int fp = open(config->ep_log_way, A_Create | A_Append | A_BIN | A_WriteOnly, P_WRITE, &err);
+    int fp = fopen(config->ep_log_way, A_Create | A_Append | A_BIN | A_WriteOnly, P_WRITE, &err);
     if(fp == -1) return;
     
     
@@ -32,8 +32,8 @@ __arch void ep_log(Elf32_Exec *ex, const char *data, int size)
       setfilesize(fp, 0, &err);
     }
     
-    write(fp, _data, sz, &err);
-    close(fp, &err);
+    fwrite(fp, _data, sz, &err);
+    fclose(fp, &err);
     mfree(_data);
 }
 

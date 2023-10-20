@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
-iar="/media/disk-1/ELF/IAR/EmbeddedWorkbenchEvaluation/common/bin/iarbuild.exe"
+unset LD_PRELOAD
+
+iar="/opt/IAR2/common/bin/iarbuild.exe"
 err="Break with errors"
 no_compile=0
 no_generate_vkp=0

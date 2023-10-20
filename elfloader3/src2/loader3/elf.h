@@ -9,6 +9,8 @@
 #ifndef _QEMU_ELF_H
 #define _QEMU_ELF_H
 
+#include <stdint.h>
+
 //typedef unsigned long long uint64_t;
 //typedef long long int64_t;
 //typedef unsigned int uint32_t;

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 directory=${1}
 phone=${2}
