@@ -60,11 +60,11 @@ if [[ ${?} != 0 ]]
 then echo $err& exit 1 
 fi
 
-#echo "CCLD  CX75sw13..."
-#wine $iar ElfLoader.ewp -make CX75sw13 -log warnings
-#if [[ ${?} != 0 ]] 
-#then echo $err& exit 1 
-#fi
+echo "CCLD  CX75sw13..."
+wine $iar ElfLoader.ewp -make CX75sw13 -log warnings
+if [[ ${?} != 0 ]] 
+then echo $err& exit 1 
+fi
 
 echo "CCLD  CX75sw25..."
 wine $iar ElfLoader.ewp -make CX75sw25 -log warnings
@@ -195,9 +195,9 @@ echo "HEX  CX70sw56..."
 cd ../../CX70sw56/Exe
 ./postbuild
 
-#echo "HEX  CX75sw13..."
-#cd  ../../CX75sw13/Exe
-#./postbuild
+echo "HEX  CX75sw13..."
+cd  ../../CX75sw13/Exe
+./postbuild
 
 echo "HEX  CX75sw25..."
 cd  ../../CX75sw25/Exe
