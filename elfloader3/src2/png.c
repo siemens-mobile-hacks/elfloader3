@@ -1,4 +1,4 @@
-#include "loader3\loader.h"
+#include "loader3/loader.h"
 #include <inc/pnglist.h>
 #include <inc/png.h>
 #include <inc/swilib.h>

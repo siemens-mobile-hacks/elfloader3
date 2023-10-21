@@ -46,7 +46,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -871,7 +871,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -1694,7 +1694,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -2520,7 +2520,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -3344,7 +3344,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -4168,7 +4168,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -4994,7 +4994,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -5820,7 +5820,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -6644,7 +6644,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -7468,7 +7468,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -8291,7 +8291,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -9114,7 +9114,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -9937,7 +9937,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -10761,7 +10761,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -11584,7 +11584,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -12408,7 +12408,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -13232,7 +13232,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -14056,7 +14056,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -14880,7 +14880,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -15704,7 +15704,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -16528,7 +16528,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -17353,7 +17353,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -18177,7 +18177,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -19001,7 +19001,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -19825,7 +19825,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -20651,7 +20651,7 @@
         </option>
         <option>
           <name>GStackAlign</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>Input variant</name>
@@ -21707,7 +21707,7 @@
           </option>
           <option>
             <name>CCIncludePath2</name>
-            <state></state>
+          <state>$PROJ_DIR$</state>
           </option>
           <option>
             <name>CCStdIncCheck</name>
@@ -21933,7 +21933,7 @@
           </option>
           <option>
             <name>CCIncludePath2</name>
-            <state></state>
+          <state>$PROJ_DIR$</state>
           </option>
           <option>
             <name>CCStdIncCheck</name>
@@ -22159,7 +22159,7 @@
           </option>
           <option>
             <name>CCIncludePath2</name>
-            <state></state>
+          <state>$PROJ_DIR$</state>
           </option>
           <option>
             <name>CCStdIncCheck</name>
@@ -22385,7 +22385,7 @@
           </option>
           <option>
             <name>CCIncludePath2</name>
-            <state></state>
+          <state>$PROJ_DIR$</state>
           </option>
           <option>
             <name>CCStdIncCheck</name>
