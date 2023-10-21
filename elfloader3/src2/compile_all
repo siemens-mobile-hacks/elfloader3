@@ -60,6 +60,12 @@ if [[ ${?} != 0 ]]
 then echo $err& exit 1 
 fi
 
+#echo "CCLD  CX75sw13..."
+#wine $iar ElfLoader.ewp -make CX75sw13 -log warnings
+#if [[ ${?} != 0 ]] 
+#then echo $err& exit 1 
+#fi
+
 echo "CCLD  CX75sw25..."
 wine $iar ElfLoader.ewp -make CX75sw25 -log warnings
 if [[ ${?} != 0 ]] 
@@ -78,6 +84,12 @@ if [[ ${?} != 0 ]]
 then echo $err& exit 1 
 fi
 
+#echo "CCLD  M75sw25..."
+#wine $iar ElfLoader.ewp -make M75sw25 -log warnings
+#if [[ ${?} != 0 ]] 
+#then echo $err& exit 1 
+#fi
+
 echo "CCLD  S65sw58..."
 wine $iar ElfLoader.ewp -make S65sw58 -log warnings
 if [[ ${?} != 0 ]] 
@@ -95,6 +107,12 @@ wine $iar ElfLoader.ewp -make S68sw52 -log warnings
 if [[ ${?} != 0 ]] 
 then echo $err& exit 1 
 fi
+
+#echo "CCLD  S75sw40..."
+#wine $iar ElfLoader.ewp -make S75sw40 -log warnings 
+#if [[ ${?} != 0 ]] 
+#then echo $err& exit 1 
+#fi
 
 echo "CCLD  S75sw47..."
 wine $iar ElfLoader.ewp -make S75sw47 -log warnings 
@@ -177,6 +195,10 @@ echo "HEX  CX70sw56..."
 cd ../../CX70sw56/Exe
 ./postbuild
 
+#echo "HEX  CX75sw13..."
+#cd  ../../CX75sw13/Exe
+#./postbuild
+
 echo "HEX  CX75sw25..."
 cd  ../../CX75sw25/Exe
 ./postbuild
@@ -189,6 +211,10 @@ echo "HEX  EL71sw45..."
 cd  ../../EL71sw45/Exe
 ./postbuild
 
+#echo "HEX  M75sw25..."
+#cd  ../../M75sw25/Exe
+#./postbuild
+
 echo "HEX  S65sw58..."
 cd  ../../S65sw58/Exe
 ./postbuild
@@ -200,6 +226,10 @@ cd  ../../S68sw47/Exe
 echo "HEX  S68sw52..."
 cd  ../../S68sw52/Exe
 ./postbuild
+
+#echo "HEX  S75sw40..."
+#cd  ../../S75sw40/Exe
+#./postbuild
 
 echo "HEX  S75sw47..."
 cd  ../../S75sw47/Exe
