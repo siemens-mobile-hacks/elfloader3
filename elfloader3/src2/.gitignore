@@ -1,0 +1,7 @@
+ElfLoader.dep
+*/List/*
+*/Obj/*
+*/Exe/*.hex
+*/Exe/*.a79
+*/Exe/*.elf
+*/Exe/ElfPack.vkp
