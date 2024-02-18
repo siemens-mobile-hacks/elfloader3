@@ -11331,7 +11331,7 @@
         </option>
         <option>
           <name>XclFile</name>
-          <state>$PROJ_DIR$\C72v22.xcl</state>
+          <state>$PROJ_DIR$\C72sw22.xcl</state>
         </option>
         <option>
           <name>XclFileSlave</name>
@@ -22405,7 +22405,7 @@
     </configuration>
   </file>
   <file>
-    <name>$PROJ_DIR$\rets_C72v22.asm</name>
+    <name>$PROJ_DIR$\rets_C72sw22.asm</name>
     <excluded>
       <configuration>S75sw40</configuration>
       <configuration>CX70sw56</configuration>

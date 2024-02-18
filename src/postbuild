@@ -1,50 +1,61 @@
 #!/bin/bash
+set -e
 
-directory=${1}
-phone=${2}
-outname="$directory/${3}"
-swilibBegin=${4}
-AddrLibrary=${5}
-Time=$(cat time.txt)
-FF="${directory}/FF_${phone}.bin"
-FF_EXISTS=0
+root=$(dirname $0)
+cd "$root"
 
+unset LD_PRELOAD
 
-if [ -f $FF ]
-then
-echo 'FullFlash found, generating vkp without recovery info'
-FF_EXISTS=1
-wine elf2vkp.exe "${directory}/ElfLoader.elf" "${directory}/ElfLoader3.vkp" "${FF}" &> /dev/null
+model=$1
+TIMESTAMP=$2
+
+FF="$root/../ff/$model.bin"
+out="$root/$model/Exe"
+out_vkp="$root/../release/ElfPack_$model.vkp"
+
+# Генерируем патч
+if [ -f $FF ]; then
+	echo 'FullFlash found, generating vkp with recovery info.'
+	wine elf2vkp.exe "${out}/ElfLoader.elf" "${out}/ElfLoader3.vkp" "${FF}" &> /dev/null
+	FF_EXISTS=1
 else
-echo 'FullFlash not found, generating vkp without recovery info'
-wine elf2vkp.exe "${directory}/ElfLoader.elf" "${directory}/ElfLoader3.vkp" &> /dev/null
+	FF_EXISTS=0
+	echo 'FullFlash not found, generating vkp without recovery info!!!'
+	wine elf2vkp.exe "${out}/ElfLoader.elf" "${out}/ElfLoader3.vkp" &> /dev/null
 fi
 
-echo ";"$phone > $outname
-cat copyright.txt >> $outname
-echo ";Date: "${Time} >> $outname
-echo -e "\n" >> $outname
+echo ";"$model > $out_vkp
+cat "$root/copyright.txt" >> $out_vkp
+echo ";Date: "${TIMESTAMP} >> $out_vkp
+echo -e "\n" >> $out_vkp
 
 # если фул не найден - старые данные == FF
-if [ $FF_EXISTS == 0 ]
-then
-echo "#pragma enable old_equal_ff" >> $outname
+if [ $FF_EXISTS == 0 ]; then
+	echo "#pragma enable old_equal_ff" >> $out_vkp
 fi
-cat "$directory/ElfLoader3.vkp" >> $outname
-if [ $FF_EXISTS == 0 ]
-then
- echo "#pragma disable old_equal_ff" >> $outname
+cat "$out/ElfLoader3.vkp" >> $out_vkp
+if [ $FF_EXISTS == 0 ]; then
+	echo "#pragma disable old_equal_ff" >> $out_vkp
 fi
 
-echo "" >> $outname
-echo " ; Needed function" >> $outname
-echo "$swilibBegin" >> $outname
+SWILIB_ADDR=$(cat "$root/$model.xcl" | grep -P 'LIBR=A([A-F0-9]+)' -oi | sed 's/LIBR=A//g')
 
-echo "#pragma enable old_equal_ff" >> $outname
-echo "$AddrLibrary   ;  FF: unsigned int AddrLibrary()" >> $outname
-echo "#pragma disable old_equal_ff" >> $outname
-echo "+0" >> $outname
+if [[ $SWILIB_ADDR = "" ]]; then
+	echo "Can't get swilib addr for $model"
+	exit 1
+fi
 
-rm "${directory}/ElfLoader3.vkp"
-rm "${directory}/ElfLoader.elf"
-exit 0
+echo "" >> $out_vkp
+echo "; Needed function" >> $out_vkp
+echo ";+$SWILIB_ADDR" >> $out_vkp
+
+echo ";#pragma enable old_equal_ff" >> $out_vkp
+echo ";03FC: 0xA$SWILIB_ADDR   ;  FF: unsigned int AddrLibrary()" >> $out_vkp
+echo ";#pragma disable old_equal_ff" >> $out_vkp
+echo ";+0" >> $out_vkp
+
+rm "${out}/ElfLoader3.vkp"
+rm "${out}/ElfLoader.elf"
+
+echo "VKP: $out_vkp"
+echo ""
