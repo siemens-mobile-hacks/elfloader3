@@ -1,0 +1,6 @@
+root = true
+
+[*]
+encoding = windows-1251
+indent_style = space
+indent_size = 4
