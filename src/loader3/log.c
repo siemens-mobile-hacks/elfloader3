@@ -4,7 +4,7 @@
 
 
 
-__arch void ep_log(Elf32_Exec *ex, const char *data, int size)
+__thumb void ep_log(Elf32_Exec *ex, const char *data, int size)
 {
     if(!*config->ep_log_way || !config->max_log_size) return;
     

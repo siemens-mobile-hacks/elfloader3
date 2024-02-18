@@ -53,17 +53,11 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
-#define __thumb_mode 1
-
 #ifndef _test_linux
   #define printf(...)
-#ifdef __thumb_mode 
-  #define __arch __thumb
 #else
-  #define __arch __arm
-#endif /*__thumb_mode*/
-#else
-  #define __arch 
+  #define __thumb
+  #define __arm 
 #endif /* _test_linux */
 
 #define NO_FILEORDIR  "no such file or directory"
@@ -181,7 +175,7 @@ Elf32_Exec* elfopen(const char* filenam);
 int elfclose(Elf32_Exec* ex);
 void *elf_entry(Elf32_Exec *);
 
-__arch void sub_clients(Elf32_Lib* lib);
+__thumb void sub_clients(Elf32_Lib* lib);
 
 /* init/fini arrays support */
 void run_INIT_Array(Elf32_Exec *ex);

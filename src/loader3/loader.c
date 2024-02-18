@@ -25,7 +25,6 @@ void ep_log(Elf32_Exec *ex, const char *l, int sz)
 
 
 /* wraper for thumb-mode calling */
-#ifdef __thumb_mode
 extern __arm void l_msg(int a, int b);
 
 __arm void *memcpy_a(void *dest, const void *src, size_t size)
@@ -37,17 +36,12 @@ __arm int memcmp_a (const void *m1, const void *m2, size_t n)
 {
     return memcmp(m1, m2, n);
 }
-#else
-#define l_msg ShowMSG
-#define memcpy_a memcpy
-#define memcmp_a memcmp
-#endif
 
 unsigned int ferr;
 
 
 // Проверка валидности эльфа
-__arch int CheckElf(Elf32_Ehdr *ehdr)
+__thumb int CheckElf(Elf32_Ehdr *ehdr)
 {
     if(memcmp_a(ehdr, elf_magic_header, sizeof(elf_magic_header))) return E_HEADER;
     if(ehdr->e_machine != EM_ARM) return E_MACHINE;
@@ -57,7 +51,7 @@ __arch int CheckElf(Elf32_Ehdr *ehdr)
 
 
 // Получение нужного размера в раме
-__arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
+__thumb unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
 {
     unsigned int i = 0;
     unsigned long maxadr=0;
@@ -80,7 +74,7 @@ __arch unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs)
 
 
 
-__arch char* LoadData(Elf32_Exec* ex, int offset, int size)
+__thumb char* LoadData(Elf32_Exec* ex, int offset, int size)
 {
 #ifdef _test_linux
     if(size && lseek(ex->fp, offset - ex->v_addr, S_SET))
@@ -106,7 +100,7 @@ __arch char* LoadData(Elf32_Exec* ex, int offset, int size)
 
 
 /* Вспомогательная функция */
-__arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
+__thumb static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 {
     Libs_Queue *lib = ex->libs;
     unsigned int func = 0;
@@ -120,7 +114,7 @@ __arch static inline unsigned int _look_sym(Elf32_Exec *ex, const char *name)
 
 
 /* функция пролетается рекурсивно по либам которые в зависимостях */
-__arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bind_type)
+__thumb unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bind_type)
 {
     printf("Searching in libs...\n");
     unsigned int address = 0;
@@ -148,7 +142,7 @@ __arch unsigned int try_search_in_base(Elf32_Exec* ex, const char *name, int bin
 
 
 // Релокация
-__arch int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
+__thumb int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr)
 {
     unsigned int i = 0;
     Elf32_Word libs_needed[64];
@@ -502,7 +496,7 @@ skeep_err1:
 
 
 // Чтение сегментов из файла
-__arch int LoadSections(Elf32_Exec* ex)
+__thumb int LoadSections(Elf32_Exec* ex)
 {
     Elf32_Phdr* phdrs = malloc(sizeof(Elf32_Phdr) * ex->ehdr.e_phnum);
     if(!phdrs) return E_SECTION;
@@ -619,7 +613,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 
 
 /* constructors */
-__arch void run_INIT_Array(Elf32_Exec *ex)
+__thumb void run_INIT_Array(Elf32_Exec *ex)
 {
     if(!ex->dyn[DT_FINI_ARRAY]) return;
     size_t sz = ex->dyn[DT_INIT_ARRAYSZ] / sizeof (void*);
@@ -638,7 +632,7 @@ __arch void run_INIT_Array(Elf32_Exec *ex)
 
 
 /* destructors */
-__arch void run_FINI_Array(Elf32_Exec *ex)
+__thumb void run_FINI_Array(Elf32_Exec *ex)
 {
     if(!ex->dyn[DT_FINI_ARRAY]) return;
     size_t sz = ex->dyn[DT_FINI_ARRAYSZ] / sizeof (void*);

@@ -23,7 +23,7 @@ __arm void l_msg(int a, int b) {ShowMSG(a, b);}
 
 
 /* Загрузка эльфа */
-__arch int elfload(char *filename, void *param1, void *param2, void *param3){
+__thumb int elfload(char *filename, void *param1, void *param2, void *param3){
   
   Elf32_Exec *ex = elfopen(filename);
   if(!ex){

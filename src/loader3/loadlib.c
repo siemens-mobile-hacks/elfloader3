@@ -15,7 +15,6 @@ extern int __e_div(int delitelb, int delimoe);
 #endif
 char tmp[258] = {0}, dlerr[128]={0};
 
-#ifdef __thumb_mode
 extern __arm void *memcpy_a (void *dest, const void *src, size_t size);
 extern __arm unsigned int AddrLibrary_a();
 
@@ -23,11 +22,6 @@ __arm char * strrchr_a (const char *s, int c)
 {
   return strrchr(s, c);
 }
-#else
-#define memcpy_a memcpy
-#define AddrLibrary_a AddrLibrary
-#define strrchr_a strrchr
-#endif
 
 
 Global_Queue* lib_top = 0;
@@ -38,7 +32,7 @@ int handles_cnt = 0;
  /*
   * Существует ли файл
   */
-__arch char __is_file_exist(const char *fl)
+__thumb char __is_file_exist(const char *fl)
 {
 #ifdef _test_linux
     return access(fl, 0) != -1;
@@ -54,7 +48,7 @@ __arch char __is_file_exist(const char *fl)
  /*
   * Возвращает хеш имени
   */
-__arch unsigned int name_hash(const char* name)
+__thumb unsigned int name_hash(const char* name)
 {
     unsigned int hash = 0;
     unsigned int hi;
@@ -84,7 +78,7 @@ __arch unsigned int name_hash(const char* name)
  /*
   * Находит в библиотеке требуемый експорт
   */
-__arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
+__thumb Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 {
     if(!ex || !ex->hashtab) return 0;
 
@@ -139,7 +133,7 @@ __arch Elf32_Word findExport (Elf32_Exec* ex, const char* name)
 
 
 
-__arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
+__thumb Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
 {
     if(!lib) return 0;
     return findExport(lib->ex, name);
@@ -151,7 +145,7 @@ __arch Elf32_Word FindFunction(Elf32_Lib* lib, const char *name)
   * пропарсить содержимое переменной LD_LIBRARY_PATH
   * путь1;путь2;путь3;
   */
-__arch char * envparse(const char *str, char *buf, int num)
+__thumb char * envparse(const char *str, char *buf, int num)
 {
   if( !str || !buf || num < 0) return 0;
   const char *start = str;
@@ -185,7 +179,7 @@ __arch char * envparse(const char *str, char *buf, int num)
  /*
   * Поиск библиотек в папках переменной окружения
   */
-__arch const char * findShared(const char *name)
+__thumb const char * findShared(const char *name)
 {
 #ifdef _test_linux
     const char *env = getenv("sie_test");
@@ -213,7 +207,7 @@ __arch const char * findShared(const char *name)
  /*
   * Открывает и парсит заданную библиотеку
   */
-__arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
+__thumb Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
 {
     if(!name || !*name) return 0;
     printf("Starting loading shared library '%s'...\n", name);
@@ -425,7 +419,7 @@ try_again:
  /*
   * Вычесть общее количество клиентов либ
   */
-__arch void sub_clients(Elf32_Lib* lib)
+__thumb void sub_clients(Elf32_Lib* lib)
 {
   lib->users_cnt--;
 }
@@ -435,7 +429,7 @@ __arch void sub_clients(Elf32_Lib* lib)
  /*
   * Закрывает бибилотеку и освобождает ресурсы
   */
-__arch int CloseLib(Elf32_Lib* lib, int immediate)
+__thumb int CloseLib(Elf32_Lib* lib, int immediate)
 {
     if(!lib) return E_EMPTY;
 
@@ -476,7 +470,7 @@ end:
  /*
   * POSIX-подобная dlopen
   */
-__arch int dlopen(const char *name)
+__thumb int dlopen(const char *name)
 {
   int handle = -1;
   
@@ -564,7 +558,7 @@ Elf32_Word dlsym(int handle, const char *name)
  /*
   * POSIX-подобная dlerror
   */
-__arch const char *dlerror()
+__thumb const char *dlerror()
 {
   return dlerr;
 }
@@ -574,7 +568,7 @@ __arch const char *dlerror()
  /*
   * Шапка резинового массива^W^W связного списка либ
   */
-__arch void *SHARED_TOP()
+__thumb void *SHARED_TOP()
 {
   return lib_top;
 }
@@ -584,7 +578,7 @@ __arch void *SHARED_TOP()
  /*
   * Очистка не нужных библиотек
   */
-__arch int dlclean_cache()
+__thumb int dlclean_cache()
 {
   if(!lib_top) return -1;
   
