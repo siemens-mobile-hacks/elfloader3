@@ -21459,6 +21459,9 @@
     <file>
       <name>$PROJ_DIR$\loader3\log.c</name>
     </file>
+    <file>
+      <name>$PROJ_DIR$\loader3\thumb.c</name>
+    </file>
   </group>
   <file>
     <name>$PROJ_DIR$\additional.c</name>

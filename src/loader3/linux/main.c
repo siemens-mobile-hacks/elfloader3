@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 	config->max_log_size = 50 * 1024;
 	config->realtime_libclean = 1;
 	
-	elfloader_setenv("LD_LIBRARY_PATH", "../../../sdk/lib/NSG/;../../../sdk/lib/", 1);
+	elfloader_setenv("LD_LIBRARY_PATH", "../../../sdk/lib/NSG/;../../../sdk/lib/;../../../sdk/lib/legacy/", 1);
 	
 	if (argc < 2) {
 		fprintf(stderr, "usage: %s file.elf\n", argv[0]);

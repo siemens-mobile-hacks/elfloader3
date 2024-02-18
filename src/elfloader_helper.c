@@ -1,29 +1,19 @@
-
-
+#include <inc\swilib.h>
+#include <stdbool.h>
 #include "conf_loader.h"
 #include "loader3\loader.h"
 #include "loader3\env.h"
 #include "config_struct.h"
 
-
-//#define __ELFTHREAD
-#define ELF_PROC_RUNER_ID 0x4409
-const int elf_run_prio = 0x2;
-int lock_thread = 0;
 int dlclean_cache();
-//Mutex mutex;
+const uint32_t *pLIB_TOP = NULL;
 
-
-__arm void __run_proc(void *entry, char *filename, void *param1, void *param2, void *param3);
-#ifndef ARM
-__arm void zeromem_a(void *d, int l){zeromem(d,l);}
-__arm void l_msg(int a, int b) {ShowMSG(a, b);}
-#endif
-
-
+static __arm char *RamPressedKey_a() {
+  return RamPressedKey();
+}
 
 /* Загрузка эльфа */
-__thumb int elfload(char *filename, void *param1, void *param2, void *param3){
+int elfload(char *filename, void *param1, void *param2, void *param3){
   
   Elf32_Exec *ex = elfopen(filename);
   if(!ex){
@@ -41,11 +31,7 @@ __thumb int elfload(char *filename, void *param1, void *param2, void *param3){
     
   if(!ex->__is_ex_import && ex->libs)
   {
-    l_msg(1, (int)"Incorrect elf");
-    
-    char dbg[256];
-    int csz = sprintf(dbg, "If you wont to use the shared libraries, you must add to linker option '--defsym __ex=0' add use elfclose function!\n");
-    ep_log(ex, dbg, csz);
+    l_msg(1, (int)"Incorrect elf, symbol __ex not found.");
     elfclose(ex);
     return -3;
   }
@@ -56,10 +42,10 @@ __thumb int elfload(char *filename, void *param1, void *param2, void *param3){
   //run_INIT_Array(ex);
   entry(filename, param1, param2, param3);
 
-  
+  // Костыль для IAR-style эльфов
   if(!ex->__is_ex_import && !ex->libs)
   {
-    ex->body = 0;
+    ex->body = NULL; // Тело эльфа не освобождаем!!!
     elfclose(ex);
   }
   
@@ -68,13 +54,9 @@ __thumb int elfload(char *filename, void *param1, void *param2, void *param3){
 }
 
 
-__arm void InitLoaderSystem()
+static void InitLoaderSystem()
 {
-  if(!*(config->LD_LIBRARY_PATH_env)){
-    strncpy(config->LD_LIBRARY_PATH_env, "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", sizeof(config->LD_LIBRARY_PATH_env));
-  }
-  
-  setenv("LD_LIBRARY_PATH", config->LD_LIBRARY_PATH_env, 1);
+  setenv("LD_LIBRARY_PATH", *config->LD_LIBRARY_PATH_env ? config->LD_LIBRARY_PATH_env : "0:\\ZBin\\lib\\;4:\\ZBin\\lib\\;", 1);
 }
 
 
@@ -84,7 +66,7 @@ int main()
 }
 
 
-int elfloader_onload(WSHDR *filename, WSHDR *ext, void *param){
+static int elfloader_onload(WSHDR *filename, WSHDR *ext, void *param){
   char fn[128];
   ws_2str(filename,fn,126);
   if (elfload(fn, param, 0, 0)) return 0; else return 1;
@@ -115,7 +97,7 @@ extern unsigned int DEFAULT_DISK_N;
 #endif
 #define MSG_HELPER_RUN 0x0001
 
-__arm void proc_HELPER(void)
+static __arm void proc_HELPER(void)
 {
   GBS_MSG msg;
   if (GBS_RecActDstMessage(&msg))
@@ -134,7 +116,7 @@ __arm void proc_HELPER(void)
   }
 }
 
-__arm void CreateHELPER_PROC(void)
+static __arm void CreateHELPER_PROC(void)
 {
   static const char name[]="HELPER";
   CreateGBSproc(HELPER_CEPID, name, proc_HELPER, 0x80, 0);
@@ -157,7 +139,7 @@ __arm void SUBPROC_impl(void *f, int p2, void *p1)
   GBS_SendMessage(HELPER_CEPID,MSG_HELPER_RUN,p2,f,p1);
 }
 
-__thumb void SEQKILLER_impl(void *data, void(*next_in_seq)(void *), void *data_to_kill)
+void SEQKILLER_impl(void *data, void(*next_in_seq)(void *), void *data_to_kill)
 {
   next_in_seq(data);
   mfree(data_to_kill);
@@ -177,17 +159,23 @@ __arm void MyIDLECSMonClose(void *data)
   //  asm("NOP\n");
 }
 
-__arm void LoadDaemons(void)
+static void LoadDaemons(void)
 {
 
   DIR_ENTRY de;
   unsigned int err;
   unsigned int pathlen;
   char name[256];
-  strcpy(name, config->DAEMONS_FOLDER);
-  //name[0]=DEFAULT_DISK_N+'0';
-  pathlen=strlen(name);
-  strcat(name,"*.elf");
+
+  // Опциональный дебаггер
+  sprintf(name, "%sCore\\DebugHook.elf", config->DAEMONS_PATH);
+  if (get_file_size(name) > 0) {
+    elfload(name, 0, 0, &elfloader_debug_hook);
+  }
+
+  sprintf(name, "%s*.elf", config->DAEMONS_PATH);
+  pathlen=strlen(config->DAEMONS_PATH);
+  
   if (FindFirstFile(&de,name,&err))
   {
     do
@@ -202,9 +190,6 @@ __arm void LoadDaemons(void)
   FindClose(&de,&err);
 }
 
-__no_init void *(*pLIB_TOP)[];
-extern void *Library[];
-
 int get_file_size(const char * fname)
 {
   FSTATS fs;
@@ -213,63 +198,70 @@ int get_file_size(const char * fname)
   else return (fs.size);
 }
 
-__arm void LoadLibrary(void)
-{
-  void *(*lt)[]=pLIB_TOP;
-#define LIB_EMPTY ((void *)-1L)
-  unsigned int ul;
-  int sz;
-  int f;
-  char fn[64];
-  strcpy(fn, config->SWIBLIB_WAY);
-  //fn[0]=DEFAULT_DISK_N+'0';
-  if (lt)
-  {
-    pLIB_TOP=NULL;
-    mfree(lt);
-    lt=NULL;
+// Функция подмены swilib
+static int SetDynSwilib(uint32_t *new_swilib) {
+  for (int i = 0; i < 0x1000; i++) {
+    // Если функции нет в swi.blib, используем аналогичную из library.vkp
+    if (new_swilib[i] == 0xFFFFFFFF)
+      new_swilib[i] = Library[i];
+    
+    // Проверим на конфликт функций
+    if (Library[i] != 0xFFFFFFFF && new_swilib[i] != 0xFFFFFFFF && new_swilib[i] != Library[i])
+      return i; // Вернём функцию, с которой у нас проблема
+    
+    // Специальный маркер о том, что функции не существует
+    // Используется для GCC, где невозможно использовать SWI
+    if (new_swilib[i] == 0xFFFFFFFF)
+      new_swilib[i] = 0xFFFF0000 | (i << 4); // Формат маркера: FFFFxxx0 (xxx - номер swi)
   }
-  if ((sz=get_file_size(fn))==-1) return;
-  if (sz!=16384)
-  {
-    ShowMSG(1,(int)"Illegal library size!");
-    return;
-  }
-  f=fopen(fn,A_ReadOnly+A_BIN, P_READ, &ul);
-  if (f==-1) return;
-  lt=malloc(16384);
-  if (fread(f,lt,sz,&ul)!=sz)
-  {
-    fclose(f,&ul);
-    ShowMSG(1,(int)"Can't read library!");
-  LERR:
-    mfree(lt);
-    return;
-  }
-  fclose(f,&ul);
-  f=0;
-  do
-  {
-    if (((*lt)[f]!=LIB_EMPTY)&&(Library[f]!=LIB_EMPTY))
-    {
-      if ((*lt)[f]!=Library[f])
-      {
-  char s[50];
-  sprintf(s,"Function %d conflict!",f);
-  ShowMSG(1,(int)s);
-  goto LERR;
-      }
-    }
-    if ((*lt)[f]==LIB_EMPTY)
-    {
-      (*lt)[f]=Library[f];
-    }
-    f++;
-  }
-  while(f<4096);
-  pLIB_TOP=lt;
-#undef LIB_EMPTY
+  
+  // Заменяем таблицу функций
+  pLIB_TOP = new_swilib;
+  
+  return -1;
 }
+
+// Загрузка swi.blib
+static bool LoadDynSwilibFromFile(void)
+{
+  unsigned int err;
+  int sz = get_file_size(config->SWIBLIB_PATH);
+  if (sz == -1) // no swi.blib
+    return false;
+
+  // Размер должен быть точным
+  if (sz != 0x4000) {
+    l_msg(1, (int) "Illegal swi.blib size!");
+    return false;
+  }
+
+  int fd = fopen(config->SWIBLIB_PATH, A_ReadOnly + A_BIN, P_READ, &err);
+  if (fd < 0)
+    return 0;
+
+  uint32_t *new_lib = malloc(0x4000);
+  if (!new_lib || fread(fd, new_lib, sz, &err) != 0x4000) {
+    l_msg(1, (int) "Can't read swi.blib!");
+    fclose(fd, &err);
+    mfree(new_lib);
+    return false;
+  }
+
+  fclose(fd, &err);
+
+  // Если всё ок, заменяем библиотеку функций
+  int conflicted_func = SetDynSwilib(new_lib);
+  if (conflicted_func != -1) {
+    char tmp[64];
+    sprintf(tmp, "swi.blib function %d conflict!", conflicted_func);
+    l_msg(1, (int) tmp);
+    mfree(new_lib);
+    return false;
+  }
+  
+  return true;
+}
+
 extern void InitPngBitMap(void);
 
 __no_init char smallicons_str[32];
@@ -277,7 +269,7 @@ __no_init char bigicons_str[32];
 
 
 #pragma segment="DATA_Z"
-__arm void MyIDLECSMonCreate(void *data)
+void MyIDLECSMonCreate(void *data)
 {
   /* рамные сегменты с приставко Z должны обнулятся, их никто не обнулял, как оно работало вообще??? */
   void *must_zero = (void *)__segment_begin("DATA_Z");
@@ -319,21 +311,29 @@ __arm void MyIDLECSMonCreate(void *data)
 #endif
   CreateHELPER_PROC();
   InitConfig();
-  LoadLibrary();
+
+  if (!LoadDynSwilibFromFile()) {
+    // Если не смогли загрузить swi.blib, просто зеркалим library.vkp в раму
+    uint32_t *dyn_swilib = malloc(0x4000);
+    if (dyn_swilib) {
+      memset(dyn_swilib, 0xFF, 0x4000);
+      SetDynSwilib(dyn_swilib);
+    }
+  }
   InitLoaderSystem();
   InitPngBitMap();
   //strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
   //strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
   //smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';
-  sprintf(smallicons_str, "%self_small.png", config->IMAGE_FOLDER);
-  sprintf(bigicons_str, "%self_big.png", config->IMAGE_FOLDER);
+  sprintf(smallicons_str, "%self_small.png", config->IMAGES_PATH);
+  sprintf(bigicons_str, "%self_big.png", config->IMAGES_PATH);
   RegExplorerExt(&elf_reg);
 
   /* ну а хуле, плюшки для блондинок */
-  if( *RamPressedKey() != '#')
+  if(*RamPressedKey_a() != '#')
   {
     if(config->load_in_suproc)
-      SUBPROC((void *)LoadDaemons);
+      SUBPROC_a((void *)LoadDaemons, NULL);
     else
       LoadDaemons();
   }
@@ -345,7 +345,7 @@ __arm void MyIDLECSMonCreate(void *data)
   //  asm("NOP\n");
 }
 
-unsigned int char8to16(int c)
+static unsigned int char8to16(int c)
 {
   if (c==0xA8) c=0x401;
   if (c==0xAA) c=0x404;
@@ -359,7 +359,7 @@ unsigned int char8to16(int c)
   return(c);
 }
 
-void ascii2ws(char *s, WSHDR *ws)
+static void ascii2ws(char *s, WSHDR *ws)
 {
   int c;
   while((c=*s++))
@@ -392,7 +392,7 @@ return(c);
 
 //static const char extfile[]=DEFAULT_DISK ":\\ZBin\\etc\\extension.cfg";
 
-__arm void DoUnknownFileType(WSHDR *filename)
+static __arm void DoUnknownFileType(WSHDR *filename)
 {
   WSHDR *wsmime=AllocWS(15);
   wsprintf(wsmime,"txt");
@@ -499,7 +499,7 @@ __arm TREGEXPLEXT *EXT2_REALLOC(void)
 
 
 #ifdef NEWSGOLD
-__thumb MyShowMSG(int p1, int p2)
+MyShowMSG(int p1, int p2)
 {
 #ifdef ELKA
   if (p2!=0x1DD1)
@@ -528,7 +528,7 @@ __arm void PropertyPatch(WSHDR *unk_foldername, WSHDR *unk_filename)
 
 #endif
 
-__arm void FUNC_ABORT(int f)
+void FUNC_ABORT(int f)
 {
   char s[32];
   extern void StoreErrInfoAndAbort(int code,const char *module_name,int type,int unk3);

@@ -1,18 +1,17 @@
-
 #include "loader.h"
-
 
 char **l__environ = 0;
 char **l_last_environ = 0;
 
+#ifndef __linux__
+static char *strchrnul(const char *s, int c_in) {
+    while (*++s != c_in && *s);
+    return (char *)s;
+}
+#endif
 
-
-__arm char *
-strchrnul (const char *s, int c_in)
-{
-  while( *++s != c_in && *s);
-  
-  return (char*)s;
+static __arm int strncmp_a(const char *s1, const char *s2, int n) {
+    return strncmp(s1, s2, n);
 }
 
 /* This function is used by `setenv' and `putenv'.  The difference between
@@ -21,7 +20,7 @@ strchrnul (const char *s, int c_in)
    must be used directly.  This is all complicated by the fact that we try
    to reuse values once generated for a `setenv' call since we can never
    free the strings. [in uclibc, we do not]  */
-__arm static int __add_to_environ(const char *name, const char *value,
+static int __add_to_environ(const char *name, const char *value,
         int replace)
 {
     register char **ep;
@@ -39,7 +38,7 @@ __arm static int __add_to_environ(const char *name, const char *value,
     size = 0;
     if (ep != NULL) {
         while (*ep != NULL) {
-            if (!strncmp(*ep, name, namelen) && (*ep)[namelen] == '=') {
+            if (!strncmp_a(*ep, name, namelen) && (*ep)[namelen] == '=') {
                 /* Found */
                 if (!replace)
                     goto DONE_OK;
@@ -59,7 +58,7 @@ __arm static int __add_to_environ(const char *name, const char *value,
         goto DONE;
     }
     if (l__environ != l_last_environ) {
-        memcpy(new_environ, l__environ, size * sizeof(char *));
+        memcpy_a(new_environ, l__environ, size * sizeof(char *));
     }
     l_last_environ = l__environ = new_environ;
 
@@ -78,9 +77,9 @@ __arm static int __add_to_environ(const char *name, const char *value,
             //__set_errno(ENOMEM);
             goto DONE;
         }
-        memcpy(var_val, name, namelen);
+        memcpy_a(var_val, name, namelen);
         var_val[namelen] = '=';
-        memcpy(&var_val[namelen + 1], value, vallen);
+        memcpy_a(&var_val[namelen + 1], value, vallen);
     }
     *ep = var_val;
 
@@ -93,14 +92,14 @@ __arm static int __add_to_environ(const char *name, const char *value,
 }
 
 
-__arm int setenv(const char *name, const char *value, int replace)
+int setenv(const char *name, const char *value, int replace)
 {
     /* NB: setenv("VAR", NULL, 1) inserts "VAR=" string */
     return __add_to_environ(name, value ? value : "", replace);
 }
 
 
-__arm int unsetenv(const char *name)
+int unsetenv(const char *name)
 {
     const char *eq;
     size_t len;
@@ -117,7 +116,7 @@ __arm int unsetenv(const char *name)
     ep = l__environ;
     /* NB: clearenv(); unsetenv("foo"); should not segfault */
     if (ep) while (*ep != NULL) {
-        if (!strncmp(*ep, name, len) && (*ep)[len] == '=') {
+        if (!strncmp_a(*ep, name, len) && (*ep)[len] == '=') {
             char *rm = *ep;
             /* Found it.  Remove this pointer by moving later ones back.  */
             char **dp = ep;
@@ -135,7 +134,7 @@ __arm int unsetenv(const char *name)
 }
 
 
-__arm char *getenv(const char *var)
+char *getenv(const char *var)
 {
     int len;
     char **ep;
@@ -145,7 +144,7 @@ __arm char *getenv(const char *var)
     
     len = strlen(var);
     while(*ep) {
-    if (memcmp(var, *ep, len) == 0 && (*ep)[len] == '=') {
+    if (memcmp_a(var, *ep, len) == 0 && (*ep)[len] == '=') {
         return *ep + len + 1;
     }
     ep++;
@@ -156,20 +155,20 @@ __arm char *getenv(const char *var)
 /* The `clearenv' was planned to be added to POSIX.1 but probably
    never made it.  Nevertheless the POSIX.9 standard (POSIX bindings
    for Fortran 77) requires this function.  */
-__arm int clearenv(void)
+int clearenv(void)
 {
 
     /* If we allocated this environment we can free it.
      * If we did not allocate this environment, it's NULL already
      * and is safe to free().  */
     if(!l_last_environ)
-        return 1;
+    return 1;
 
     int i = 0;
     while(l_last_environ[i])
     {
       mfree(l_last_environ[i]);
-          l_last_environ[i] = 0;
+      l_last_environ[i] = 0;
       ++i;
     }
 
@@ -178,7 +177,6 @@ __arm int clearenv(void)
     l__environ = NULL;
     return 0;
 }
-
 
 char **environ()
 {

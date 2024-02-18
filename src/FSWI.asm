@@ -48,9 +48,9 @@ arm_mode
 	LDR	R12,[R1,R3,LSL#2]	; Берем адрес функции
 	STRNE	R12,[SP,#4]		; пишем адрес в R0(стек)
 	BNE	exit
-	CMP	R12,#0xFFFFFFFF
-	LDREQ	R2,=FUNC_ABORT
-	STREQ	R0,[SP,#4]
+	CMN	R12,#0x10000		; EP3: всё что больше 0xFFFF0000 считаем несуществующей функцией
+	LDRCS	R2,=FUNC_ABORT
+	STRCS	R0,[SP,#4]
 	STR	R2,[SP,#0x14]		; Пишем адрес джампера для возврата в стеке (PC)
 exit:
 	LDMFD	SP!,{R0}

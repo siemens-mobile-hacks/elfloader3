@@ -8,21 +8,8 @@
 
 #include "loader.h"
 
-extern __arm void *memcpy_a (void *dest, const void *src, size_t size);
-extern __arm char * strrchr_a (const char *s, int c);
-
-__arm void SUBPROC_a(void *elf, void *param)
-{
-  SUBPROC(elf, param);
-}
-
-__arm unsigned int AddrLibrary_a()
-{
-  return AddrLibrary();
-}
-
 // Загрузка эльфа
-__thumb Elf32_Exec* elfopen(const char* filename)
+Elf32_Exec* elfopen(const char* filename)
 {
   int fp;
   Elf32_Ehdr ehdr;
@@ -48,26 +35,25 @@ __thumb Elf32_Exec* elfopen(const char* filename)
         ex->complete = 0;
         ex->__is_ex_import = 0;
         ex->meloaded = 0;
-        ex->switab = (int*)AddrLibrary_a();
-        ex->fname = filename;
+        ex->switab = (int *) (pLIB_TOP ? pLIB_TOP : Library);
+        ex->fname = malloc(strlen(filename) + 1);
+        strcpy(ex->fname, filename);
         
-        const char *p = strrchr_a(filename, '\\'); 
+        const char *p = strrchr_a(filename, PATH_SEPARATOR); 
         if(p)
         {
           ++p;
           ex->temp_env = malloc(p - filename + 2);
           memcpy_a(ex->temp_env, filename, p - filename);
           ex->temp_env[p - filename] = 0;
-        } else
+        } else {
           ex->temp_env = 0;
-          
-        
+        }
         
         if(!LoadSections(ex))
         {
           ex->complete = 1;
           fclose(fp, &ferr);
-          ex->fname = 0;
           return ex;
         }
         else
@@ -75,20 +61,19 @@ __thumb Elf32_Exec* elfopen(const char* filename)
       }
     }
   }
-  ex->fname = 0;
   fclose(fp, &ferr);
   return 0;
 }
 
 
-__thumb void *elf_entry(Elf32_Exec *ex)
+void *elf_entry(Elf32_Exec *ex)
 {
     if(!ex) return 0;
     return ( ex->body + ex->ehdr.e_entry - ex->v_addr );
 }
 
 
-__thumb int elfclose(Elf32_Exec* ex)
+int elfclose(Elf32_Exec* ex)
 {
   if(!ex) return E_EMPTY;
 
@@ -105,7 +90,11 @@ __thumb int elfclose(Elf32_Exec* ex)
     mfree(lib);
   }
 
-  if(ex->hashtab) mfree(ex->hashtab);
+  if (elfloader_debug_hook && ex->__is_ex_import) {
+    elfloader_debug_hook->hook(ELFLOADER_DEBUG_HOOK_UNLOAD, ex);
+  }
+
+  if(ex->fname) mfree(ex->fname);
   if(ex->body) mfree(ex->body);
   if(ex->temp_env) mfree(ex->temp_env);
   mfree(ex);
@@ -113,7 +102,7 @@ __thumb int elfclose(Elf32_Exec* ex)
 }
 
 
-__thumb int sub_elfclose(Elf32_Exec* ex)
+int sub_elfclose(Elf32_Exec* ex)
 {
   //elfclose(ex);
   SUBPROC_a((void*)elfclose, ex);

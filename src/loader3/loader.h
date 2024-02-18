@@ -9,39 +9,8 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
-//#define _test_linux
-
-#ifndef _test_linux
 #include <inc/swilib.h>
-#endif
-
-#ifdef _test_linux
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-
-#define A_ReadOnly O_RDONLY
-#define A_BIN 0
-#define A_TXT O_TXT
-
-#define mfree free
-
-#define fopen open
-#define fread read
-#define fwrite write
-#define fclose close
-
-#define S_SET SEEK_SET
-#define S_END SEEK_END
-#define P_READ 0
-
-#define zeromem_a(d, s) memset(d, 0, s)
-#define zeromem(d, s) memset(d, 0, s)
-
-#define l_msg(x, y) printf("MESSAGE: %s\n", (char*)y);
-#define __e_div(a, b) (b % a)
-#endif
+#include <stdbool.h>
 
 #include "elf.h"
 
@@ -53,16 +22,16 @@ static const unsigned char elf_magic_header[] =
   0x01,                    /* Only ELF version 1. */
 };
 
-#ifndef _test_linux
+#ifndef __linux__
   #define printf(...)
+  #define PATH_SEPARATOR '\\'
 #else
-  #define __thumb
-  #define __arm 
-#endif /* _test_linux */
+  #define PATH_SEPARATOR '/'
+#endif
 
-#define NO_FILEORDIR  "no such file or directory"
-#define BADFILE   "bad file type"
-#define OUTOFMEM  "out of memory"
+#define NO_FILEORDIR    "no such file or directory"
+#define BADFILE         "bad file type"
+#define OUTOFMEM        "out of memory"
 
 enum ERROR{
 
@@ -81,7 +50,8 @@ enum ERROR{
     E_SYMTAB,
     E_STRTAB,
     E_PHDR,
-    E_HASTAB
+    E_HASTAB,
+    E_DYNAMIC
 };
 
 typedef struct
@@ -118,11 +88,13 @@ typedef struct
   char* strtab;
   Libs_Queue* libs;
   int fp;
-  char complete, __is_ex_import;
+  char complete;
+  char __is_ex_import;  // 1 для новых эльфов, 0 для старых
   void *meloaded;
-  int *switab;
-  const char *fname;  // не постоянная переменная, после загрузки эльфа она обнулится
-  char *temp_env; // временное переменное окружение для эльфа
+  int *switab;          // библиотека функций
+  char *fname;          // путь к ELF или .so
+  char *temp_env;       // временное переменное окружение для эльфа
+  Elf32_Dyn *dynamic;
 } Elf32_Exec;
 
 typedef struct
@@ -133,35 +105,47 @@ typedef struct
   void *glob_queue;
 } Elf32_Lib;
 
+enum EflLoadeDebugHookType {
+        ELFLOADER_DEBUG_HOOK_LOAD = 0,
+        ELFLOADER_DEBUG_HOOK_UNLOAD = 1,
+};
+
+typedef struct {
+        void *_r_debug;
+        void(*hook)(int type, void *param);
+} ElfloaderDebugHook;
+
 typedef int ELF_ENTRY(const char *, void *);
 typedef int LIB_FUNC();
 
+extern ElfloaderDebugHook *elfloader_debug_hook;
 extern unsigned int ferr;
 
-#ifndef _test_linux
- #ifdef ARM
- #define zeromem_a(a,b) zeromem(a,b)
- #define l_msg(a,b) ShowMSG(a,b)
- #else
- void zeromem_a(void *d, int l);
- void l_msg(int a, int b);
- #endif
-#endif
- 
 extern char tmp[258];
 void ep_log(Elf32_Exec *ex, const char *data, int size);
 
 #define lprintf(...) { int __dsz = snprintf(tmp, 256, __VA_ARGS__);\
       ep_log(tmp, __dsz); }
-      
+
+extern const uint32_t *pLIB_TOP;
+extern const uint32_t Library[];
+
+#define __direct_strcmp(...) ((int (*)(char const *, char const *)) Library[0x0085])(__VA_ARGS__)
+
+extern int __e_div(int delitelb, int delimoe);
+extern int get_file_size(const char *fl);
+extern __arm char *strrchr_a(const char *s, int c);
+extern __arm int memcmp_a(const void *m1, const void *m2, size_t n);
+extern __arm void *memcpy_a(void *dest, const void *src, size_t size);
+extern __arm void SUBPROC_a(void *elf, void *param);
+extern __arm void l_msg(int flags, int msg);
 
 int CheckElf(Elf32_Ehdr *ehdr);
 unsigned int GetBinSize(Elf32_Exec *ex, Elf32_Phdr* phdrs);
 int LoadSections(Elf32_Exec* ex);
-int DoRelocation(Elf32_Exec* ex, Elf32_Dyn* dyn_sect, Elf32_Phdr* phdr);
-unsigned long elfhash(const char* name);
-Elf32_Word findExport(Elf32_Exec* ex, const char* name);
-Elf32_Word FindFunction(Elf32_Lib* lib, const char* name);
+unsigned int elfhash(const char* name);
+Elf32_Word findExport(Elf32_Exec* ex, const char* name, unsigned int hash);
+Elf32_Word FindFunction(Elf32_Lib* lib, const char* name, unsigned int hash);
 
 /* shared support */
 Elf32_Lib* OpenLib(const char *name, Elf32_Exec *ex);
@@ -175,7 +159,7 @@ Elf32_Exec* elfopen(const char* filenam);
 int elfclose(Elf32_Exec* ex);
 void *elf_entry(Elf32_Exec *);
 
-__thumb void sub_clients(Elf32_Lib* lib);
+void sub_clients(Elf32_Lib* lib);
 
 /* init/fini arrays support */
 void run_INIT_Array(Elf32_Exec *ex);

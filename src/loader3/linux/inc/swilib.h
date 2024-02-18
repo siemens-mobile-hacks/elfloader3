@@ -67,9 +67,12 @@ typedef struct {
 	int elfloader_clearenv(void);
 #endif
 
+void LockSched();
+void UnlockSched();
+
 void ShowMSG(int a, int b);
 
-void zeromem_a(void *d, int l);
+void zeromem(void *d, int l);
 
 int __swi_fopen(const char *file, uint32_t f, uint32_t m, uint32_t *err);
 int __swi_setfilesize(int fd, size_t new_size, uint32_t *err);

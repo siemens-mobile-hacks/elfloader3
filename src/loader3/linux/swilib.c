@@ -10,7 +10,8 @@
 
 uint32_t *pLIB_TOP = NULL;
 uint32_t Library[0x1000] = {
-	[0x0148] = (uint32_t) ShowMSG
+	[0x0148] = (uint32_t) ShowMSG,
+	[0x0085] = (uint32_t) strcmp,
 };
 
 config_structure_t _config = { 0 };
@@ -107,7 +108,7 @@ void GetDateTime(TDate *, TTime *) {
 	
 }
 
-void zeromem_a(void *d, int l) {
+void zeromem(void *d, int l) {
 	memset(d, 0, l);
 }
 
@@ -115,6 +116,10 @@ void ShowMSG(int a, int b) {
 	printf("ShowMSG[%d]: %s\n", a, (const char *) b);
 }
 
-void l_msg(int a, int b) {
-	ShowMSG(a, b);
+void LockSched() {
+	
+}
+
+void UnlockSched() {
+	
 }

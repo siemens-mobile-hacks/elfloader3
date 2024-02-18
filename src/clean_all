@@ -10,4 +10,6 @@ for file in $root/*sw*; do
 	fi
 done
 
+rm $root/ElfLoader.dep || true
+
 echo "Done."

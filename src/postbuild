@@ -38,24 +38,8 @@ if [ $FF_EXISTS == 0 ]; then
 	echo "#pragma disable old_equal_ff" >> $out_vkp
 fi
 
-SWILIB_ADDR=$(cat "$root/$model.xcl" | grep -P 'LIBR=A([A-F0-9]+)' -oi | sed 's/LIBR=A//g')
-
-if [[ $SWILIB_ADDR = "" ]]; then
-	echo "Can't get swilib addr for $model"
-	exit 1
-fi
-
-echo "" >> $out_vkp
-echo "; Needed function" >> $out_vkp
-echo ";+$SWILIB_ADDR" >> $out_vkp
-
-echo ";#pragma enable old_equal_ff" >> $out_vkp
-echo ";03FC: 0xA$SWILIB_ADDR   ;  FF: unsigned int AddrLibrary()" >> $out_vkp
-echo ";#pragma disable old_equal_ff" >> $out_vkp
-echo ";+0" >> $out_vkp
-
 rm "${out}/ElfLoader3.vkp"
-rm "${out}/ElfLoader.elf"
+# rm "${out}/ElfLoader.elf"
 
 echo "VKP: $out_vkp"
 echo ""

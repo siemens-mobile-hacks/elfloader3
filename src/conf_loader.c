@@ -6,17 +6,16 @@
 
 config_structure_t *config = 0;
 __no_init const char *successed_config_filename;
-extern void * memcpy_a (void *dest, const void *source, size_t cnt);
 
+// Обновляем диск у всех путей, чтобы юзеру не приходилось делать это вручную
+static inline void SyncDefaultDisk(config_structure_t *config, char disk) {
+  config->IMAGES_PATH[0] = disk;
+  config->DAEMONS_PATH[0] = disk;
+  config->SWIBLIB_PATH[0] = disk;
+  config->ELFLOADER_LOG_PATH[0] = disk;
+}
 
-#ifdef NEWSGOLD
-#define DEFAULT_DISK 4
-#else
-#define DEFAULT_DISK 0
-#endif
-
-
-__arm int LoadConfigData(const char *fname)
+static int LoadConfigData(const char *fname)
 {
   int f;
   unsigned int ul;
@@ -39,7 +38,8 @@ __arm int LoadConfigData(const char *fname)
   else
   {
   L_SAVENEWCFG:
-    memcpy(cfg, cfg_init, len);
+    memcpy_a(cfg, cfg_init, len);
+    SyncDefaultDisk(config, fname[0]);
     if ((f=fopen(fname,A_ReadWrite+A_Create+A_Truncate,P_READ+P_WRITE,&ul))!=-1)
     {
       if (fwrite(f,cfg,len,&ul)!=len) result=-1;
@@ -50,13 +50,10 @@ __arm int LoadConfigData(const char *fname)
   }
   if (result>=0)
   {
-    //DEFAULT_DISK_N=*fname-'0';
     successed_config_filename=fname;
   }
   return(result);
 }
-
-
 
 void InitConfig()
 {
@@ -67,7 +64,6 @@ void InitConfig()
   
   if( LoadConfigData("4:\\ZBin\\etc\\ElfPack.bcfg")<0)
   {
-    if (LoadConfigData("0:\\ZBin\\etc\\ElfPack.bcfg")<0)
-    {}  //DEFAULT_DISK_N=DEFAULT_DISK;
+    LoadConfigData("0:\\ZBin\\etc\\ElfPack.bcfg");
   }
 }

@@ -10,17 +10,25 @@
 const char Pointer[1]={0xFF};
 const IMGHDR empty_img = {0,0,0x1,(char *)Pointer};
 
-void* xmalloc(int x,int n)
+static __arm void LockSched_a() {
+  LockSched();
+}
+
+static __arm void UnlockSched_a() {
+  UnlockSched();
+}
+
+static void* xmalloc(int x,int n)
 {
   return malloc(n);
 }
 
-void xmfree(int x,void* ptr)
+static void xmfree(int x,void* ptr)
 {
   mfree(ptr);
 }
 
-__arm void read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length)
+static __arm void read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length)
 {
   unsigned int err;
   int f;
@@ -28,7 +36,97 @@ __arm void read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length)
   fread(f, data, length, &err);
 }
 
-__arm IMGHDR* create_imghdr(const char *fname, int type)
+/* ====================================================================== */
+static __arm int png_check_sig_a(png_bytep sig, int num) {
+  return png_check_sig(sig, num);
+}
+
+static __arm png_structp png_create_read_struct_2_a(png_const_charp user_png_ver, png_voidp error_ptr,
+                                                 png_error_ptr error_fn, png_error_ptr warn_fn, png_voidp mem_ptr,
+                                                 png_malloc_ptr malloc_fn, png_free_ptr free_fn) {
+  return png_create_read_struct_2(user_png_ver, error_ptr, error_fn, warn_fn, mem_ptr, malloc_fn, free_fn);
+}
+
+static __arm png_infop png_create_info_struct_a(png_structp png_ptr) {
+  return png_create_info_struct(png_ptr);
+}
+
+static __arm void png_destroy_read_struct_a(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr, png_infopp end_info_ptr_ptr) {
+  png_destroy_read_struct(png_ptr_ptr, info_ptr_ptr, end_info_ptr_ptr);
+}
+
+static __arm void png_set_read_fn_a(png_structp png_ptr, png_voidp io_ptr, png_rw_ptr read_data_fn) {
+  png_set_read_fn(png_ptr, io_ptr, read_data_fn);
+}
+
+static __arm void png_set_sig_bytes_a(png_structp png_ptr, int num_bytes) {
+  png_set_sig_bytes(png_ptr, num_bytes);
+}
+
+static __arm void png_read_info_a(png_structp png_ptr, png_infop info_ptr) {
+  png_read_info(png_ptr, info_ptr);
+}
+
+static __arm png_uint_32 png_get_IHDR_a(png_structp png_ptr, png_infop info_ptr, png_uint_32 *width, png_uint_32 *height, int *bit_depth, int *color_type,
+  int *interlace_method, int *compression_method, int *filter_method)
+{
+  return png_get_IHDR(png_ptr, info_ptr, width, height, bit_depth, color_type, interlace_method, compression_method, filter_method);
+}
+
+static __arm png_uint_32 png_get_valid_a(png_structp png_ptr, png_infop info_ptr, png_uint_32 flag) {
+  return png_get_valid(png_ptr, info_ptr, flag);
+}
+
+static __arm void png_set_strip_16_a(png_structp png_ptr) {
+  png_set_strip_16(png_ptr);
+}
+
+static __arm void png_set_gray_1_2_4_to_8_a(png_structp png_ptr) {
+  png_set_gray_1_2_4_to_8(png_ptr);
+}
+
+static __arm void png_set_tRNS_to_alpha_a(png_structp png_ptr) {
+  png_set_tRNS_to_alpha(png_ptr);
+}
+
+static __arm void png_read_end_a(png_structp png_ptr, png_infop info_ptr) {
+  png_read_end(png_ptr, info_ptr);
+}
+
+static __arm void png_set_packing_a(png_structp png_ptr) {
+  png_set_packing(png_ptr);
+}
+
+static __arm void png_set_gray_to_rgb_a(png_structp png_ptr) {
+  png_set_gray_to_rgb(png_ptr);
+}
+
+static __arm void png_set_palette_to_rgb_a(png_structp png_ptr) {
+  png_set_palette_to_rgb(png_ptr);
+}
+
+static __arm void png_set_filler_a(png_structp png_ptr, png_uint_32 filler, int flags) {
+  png_set_filler(png_ptr, filler, flags);
+}
+
+static __arm void png_read_update_info_a(png_structp png_ptr, void *info_ptr) {
+  png_read_update_info(png_ptr, info_ptr);
+}
+
+static __arm png_uint_32 png_get_rowbytes_a(png_structp png_ptr, png_infop info_ptr) {
+  return png_get_rowbytes(png_ptr, info_ptr);
+}
+
+static __arm void png_read_row_a(png_structp png_ptr, png_bytep row, png_bytep dsp_row) {
+  png_read_row(png_ptr, row, dsp_row);
+}
+
+static __arm int setjmp_a(jmp_buf jmpbuf) {
+  return setjmp(jmpbuf);
+}
+/* ====================================================================== */
+
+__thumb IMGHDR* create_imghdr(const char *fname, int type)
 {
   int f;
   char buf[number];
@@ -50,33 +148,33 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
   pp.img_h=NULL;
   
   if (fread(f, &buf, number, &err)!=number) goto L_CLOSE_FILE;
-  if  (!png_check_sig((png_bytep)buf,number)) goto  L_CLOSE_FILE;
+  if  (!png_check_sig_a((png_bytep)buf,number)) goto  L_CLOSE_FILE;
   
-  png_ptr = png_create_read_struct_2("1.2.5", (png_voidp)0, 0, 0, (png_voidp)0,(png_malloc_ptr)xmalloc,(png_free_ptr)xmfree);
+  png_ptr = png_create_read_struct_2_a("1.2.5", (png_voidp)0, 0, 0, (png_voidp)0,(png_malloc_ptr)xmalloc,(png_free_ptr)xmfree);
   if (!png_ptr) goto L_CLOSE_FILE;
   
-  info_ptr = (png_infop)png_create_info_struct(png_ptr);
+  info_ptr = (png_infop)png_create_info_struct_a(png_ptr);
   if (!info_ptr)
   {
-    png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+    png_destroy_read_struct_a(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
     goto L_CLOSE_FILE;
   }
-  if (setjmp(png_jmpbuf(png_ptr)))
+  if (setjmp_a(png_jmpbuf(png_ptr)))
   {
-    png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+    png_destroy_read_struct_a(&png_ptr, &info_ptr, (png_infopp)NULL);
     goto L_CLOSE_FILE;
   }
   
-  png_set_read_fn(png_ptr, (void *)f, read_data_fn);
+  png_set_read_fn_a(png_ptr, (void *)f, read_data_fn);
   
-  png_set_sig_bytes(png_ptr, number);
+  png_set_sig_bytes_a(png_ptr, number);
   
-  png_read_info(png_ptr, info_ptr);
+  png_read_info_a(png_ptr, info_ptr);
   
   png_uint_32 width, height;
   int bit_depth, color_type;
   
-  png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 0, 0, 0);
+  png_get_IHDR_a(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 0, 0, 0);
   
   if (type==0)
   {
@@ -85,25 +183,25 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
     else type = config->DEFAULT_COLOR+1;
   }
   
-  if (bit_depth < 8) png_set_gray_1_2_4_to_8(png_ptr);
+  if (bit_depth < 8) png_set_gray_1_2_4_to_8_a(png_ptr);
     
-  if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
-    png_set_tRNS_to_alpha(png_ptr); 
+  if (png_get_valid_a(png_ptr, info_ptr, PNG_INFO_tRNS))
+    png_set_tRNS_to_alpha_a(png_ptr); 
   
-  if (bit_depth == 16) png_set_strip_16(png_ptr);
+  if (bit_depth == 16) png_set_strip_16_a(png_ptr);
   
-  if (bit_depth < 8) png_set_packing(png_ptr);
+  if (bit_depth < 8) png_set_packing_a(png_ptr);
   
   if (color_type == PNG_COLOR_TYPE_PALETTE)
-    png_set_palette_to_rgb(png_ptr);
+    png_set_palette_to_rgb_a(png_ptr);
   
   if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA || color_type == PNG_COLOR_TYPE_GRAY)
-    png_set_gray_to_rgb(png_ptr);
+    png_set_gray_to_rgb_a(png_ptr);
   
-  png_set_filler(png_ptr,0xFF,PNG_FILLER_AFTER);
-  png_read_update_info(png_ptr, info_ptr);
+  png_set_filler_a(png_ptr,0xFF,PNG_FILLER_AFTER);
+  png_read_update_info_a(png_ptr, info_ptr);
   
-  rowbytes = png_get_rowbytes(png_ptr, info_ptr);
+  rowbytes = png_get_rowbytes_a(png_ptr, info_ptr);
   
   pp.row = malloc(rowbytes);
   pp.img_h = img_hc = malloc(sizeof(IMGHDR));
@@ -113,10 +211,10 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
     int rowc_w=(width+7)>>3;
     int size=height*rowc_w;
     unsigned char *iimg=(unsigned char *)(pp.img=malloc(size));
-    zeromem(iimg,size);
+    memset(iimg, 0, size);
     for (unsigned int y = 0; y<height; ++y)
     {
-      png_read_row(png_ptr, (png_bytep)pp.row, NULL);
+      png_read_row_a(png_ptr, (png_bytep)pp.row, NULL);
       for (unsigned int x = 0; x<width; x++)
       {
         if (!pp.row[x*4+0] && !pp.row[x*4+1] && !pp.row[x*4+2])
@@ -135,7 +233,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
         unsigned char *iimg=(unsigned char *)(pp.img=malloc(width*height));
         for (unsigned int y = 0; y<height; ++y)
         {
-          png_read_row(png_ptr, (png_bytep)pp.row, NULL);
+          png_read_row_a(png_ptr, (png_bytep)pp.row, NULL);
           for (unsigned int x = 0; x<width; ++x)
           {
             if (pp.row[x*4+3] < config->ALPHA_THRESHOLD)
@@ -157,7 +255,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
         unsigned short *iimg=(unsigned short *)(pp.img=malloc(width*height*2));
         for (unsigned int y = 0; y<height; ++y)
         {
-          png_read_row(png_ptr, (png_bytep)pp.row, NULL);
+          png_read_row_a(png_ptr, (png_bytep)pp.row, NULL);
           for (unsigned int x = 0; x<width; ++x)
           {
             if (pp.row[x*4+3] < config->ALPHA_THRESHOLD)
@@ -180,7 +278,7 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
         unsigned char *iimg=(unsigned char *)(pp.img=malloc((width*height)<<2));
         for (unsigned int y = 0; y<height; ++y)
         {
-          png_read_row(png_ptr, (png_bytep)pp.row, NULL);
+          png_read_row_a(png_ptr, (png_bytep)pp.row, NULL);
           for (unsigned int x = 0; x<width; ++x)
           {
             unsigned int c;
@@ -205,8 +303,8 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
   //pp->img_h->zero=0;
   pp.img_h->bitmap=pp.img;
   
-  png_read_end(png_ptr, info_ptr);
-  png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
+  png_read_end_a(png_ptr, info_ptr);
+  png_destroy_read_struct_a(&png_ptr, &info_ptr, (png_infopp)NULL);
   if (!pp.img)
   {
   L_CLOSE_FILE:
@@ -224,13 +322,13 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
 volatile __no_init PNGTOP_DESC pngtop; 
 
 #pragma inline
-int tolower(int C)
+static int tolower(int C)
 {
   if ((C>='A' && C<='Z')) C-='A'-'a';
   return(C);
 }
 
-char* strcpy_tolow(char *s1,const char *s2)
+static char* strcpy_tolow(char *s1,const char *s2)
 {
   while(*s2)
   {
@@ -240,7 +338,8 @@ char* strcpy_tolow(char *s1,const char *s2)
   return s1;
 }
 
-__arm void print10(char *s, unsigned int v)
+#pragma optimize=no_inline
+static void print10(char *s, unsigned int v)
 {
   unsigned int buf=0xF;
   while(v>=10)
@@ -260,8 +359,7 @@ __arm void print10(char *s, unsigned int v)
 
 
 /* хешовый поиск картинок */
-unsigned int name_hash(const char* name);
-unsigned int hash_strcpy(char *dst, const char* name)
+static unsigned int hash_strcpy(char *dst, const char* name)
 {
     unsigned int hash = 0;
     unsigned int hi;
@@ -288,20 +386,20 @@ unsigned int hash_strcpy(char *dst, const char* name)
  * Поэтому просто добавил проверку по хешу.
  */
 
-
-__arm IMGHDR *find_png_in_cache(const char *png_name)
+#pragma optimize=no_inline
+static IMGHDR *find_png_in_cache(const char *png_name)
 {
   PNGLIST *pl;
   PNGLIST *pl_prev;
-  LockSched();
+  LockSched_a();
   pl=(PNGLIST *)(&(pngtop.pltop));
   pl_prev=NULL;
-  unsigned int hash = name_hash(png_name);
+  unsigned int hash = elfhash(png_name);
   
   while((pl = pl->next))
   {
     /* если хеш совпал, смотрим на имя */
-    if (pl->hash == hash && !strcmp(pl->pngname, png_name))
+    if (pl->hash == hash && !__direct_strcmp(pl->pngname, png_name))
     {
       //Найден, переносим в начало и выходим
       if (pl_prev)
@@ -311,17 +409,17 @@ __arm IMGHDR *find_png_in_cache(const char *png_name)
         pl->next = (PNGLIST *)(pngtop.pltop); //Следующий - весь список
         pngtop.pltop = pl; //А первый в списке - найденый
       }
-      UnlockSched();
+      UnlockSched_a();
       return(pl->img);
     }
     pl_prev = pl; //Текущий обработанный - теперь предыдущий
   }
-  UnlockSched();
+  UnlockSched_a();
   return (0);
 }
 
 
-__arm IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
+static IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
 {
   PNGLIST *cur = malloc(sizeof(PNGLIST)), *pl_prev; //Создаем элемент списка
   cur->pngname = malloc(strlen(fname)+1);
@@ -331,7 +429,7 @@ __arm IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
   
   cur->img = img;
   int i = 0; //Это количество элементов в списке
-  LockSched();
+  LockSched_a();
   cur->next=(PNGLIST *)(pngtop.pltop); //Следующий - весь список
   pngtop.pltop=cur; //Первый в списке - новый элемент
   //Теперь подрезаем конец
@@ -343,14 +441,14 @@ __arm IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
     if (!pl)
     {
       //Закончились элементы раньше
-      UnlockSched();
+      UnlockSched_a();
       return (cur->img);
     }
     i++;
   }
   while(i<= config->CACHE_PNG); //Пока количество элементов меньше допустимого
   pl_prev->next=NULL; //Обрежем список
-  UnlockSched();
+  UnlockSched_a();
   //Остальное можно сделать с разлоченной многозадачностью
   do
   {
@@ -418,7 +516,7 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
       {
         if (i&mask40)  
         {
-          char *next=strcpy_tolow(fname, config->IMAGE_FOLDER); // Картинка вроде как есть на диске
+          char *next=strcpy_tolow(fname, config->IMAGES_PATH); // Картинка вроде как есть на диске
           //*fname=DEFAULT_DISK_N+'0';
           print10(next,pic);
           img=find_png_in_cache(fname);
@@ -432,7 +530,7 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
         LockSched();
         *bp|=mask80; // Записи нет, ставим флаг что есть
         UnlockSched();
-        char *next=strcpy_tolow(fname, config->IMAGE_FOLDER);
+        char *next=strcpy_tolow(fname, config->IMAGES_PATH);
         //*fname=DEFAULT_DISK_N+'0';
         print10(next,pic);
         img=find_png_in_cache(fname);
@@ -462,22 +560,16 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
   return add_png_in_cache(fname, img);
 }
 
-
-
-
-__arm void InitPngBitMap(void)
+void InitPngBitMap(void)
 {
   memset((void *)&pngtop, 0, sizeof(pngtop));
   if (!pngtop.bitmap)
   {
     pngtop.bitmap=malloc(20000/8*2);
   }
-  zeromem((void*)(pngtop.bitmap),20000/8*2);
+  memset((void*)(pngtop.bitmap), 0,20000/8*2);
 }
 
 #pragma diag_suppress=Pe177
 __root static const int SWILIB_FUNC1E9 @ "SWILIB_FUNC1E9" = (int)create_imghdr;
 #pragma diag_default=Pe177
-
-
-
