@@ -124,7 +124,7 @@ __arm void proc_HELPER(void)
     {
       if (msg.data0)
       {
-	((void (*)(int, void *))(msg.data0))(msg.submess,msg.data1);
+  ((void (*)(int, void *))(msg.data0))(msg.submess,msg.data1);
       }
     }
     else
@@ -254,10 +254,10 @@ __arm void LoadLibrary(void)
     {
       if ((*lt)[f]!=Library[f])
       {
-	char s[50];
-	sprintf(s,"Function %d conflict!",f);
-	ShowMSG(1,(int)s);
-	goto LERR;
+  char s[50];
+  sprintf(s,"Function %d conflict!",f);
+  ShowMSG(1,(int)s);
+  goto LERR;
       }
     }
     if ((*lt)[f]==LIB_EMPTY)

@@ -66,9 +66,9 @@ static const unsigned char elf_magic_header[] =
   #define __arch 
 #endif /* _test_linux */
 
-#define NO_FILEORDIR	"no such file or directory"
-#define BADFILE		"bad file type"
-#define OUTOFMEM	"out of memory"
+#define NO_FILEORDIR  "no such file or directory"
+#define BADFILE   "bad file type"
+#define OUTOFMEM  "out of memory"
 
 enum ERROR{
 
@@ -127,8 +127,8 @@ typedef struct
   char complete, __is_ex_import;
   void *meloaded;
   int *switab;
-  const char *fname;	// не постоянная переменная, после загрузки эльфа она обнулится
-  char *temp_env;	// временное переменное окружение для эльфа
+  const char *fname;  // не постоянная переменная, после загрузки эльфа она обнулится
+  char *temp_env; // временное переменное окружение для эльфа
 } Elf32_Exec;
 
 typedef struct

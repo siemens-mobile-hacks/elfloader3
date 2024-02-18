@@ -183,14 +183,14 @@ __arm IMGHDR* create_imghdr(const char *fname, int type)
           png_read_row(png_ptr, (png_bytep)pp.row, NULL);
           for (unsigned int x = 0; x<width; ++x)
           {
-	    unsigned int c;
+            unsigned int c;
             *iimg++=pp.row[x*4+2];
             *iimg++=pp.row[x*4+1];
             *iimg++=pp.row[x*4+0];
-	    c=pp.row[x*4+3];
-//	    if (c>=128) c++;
-//	    c*=100;
-//	    c>>=8;
+            c=pp.row[x*4+3];
+//          if (c>=128) c++;
+//          c*=100;
+//          c>>=8;
             *iimg++=c;//(pp.row[x*4+3]*100)/0xFF;
           }
         }
@@ -306,10 +306,10 @@ __arm IMGHDR *find_png_in_cache(const char *png_name)
       //Найден, переносим в начало и выходим
       if (pl_prev)
       {
-	//Только если не в самом начале
-	pl_prev->next = pl->next; //Удалили из найденого места
-	pl->next = (PNGLIST *)(pngtop.pltop); //Следующий - весь список
-	pngtop.pltop = pl; //А первый в списке - найденый
+        //Только если не в самом начале
+        pl_prev->next = pl->next; //Удалили из найденого места
+        pl->next = (PNGLIST *)(pngtop.pltop); //Следующий - весь список
+        pngtop.pltop = pl; //А первый в списке - найденый
       }
       UnlockSched();
       return(pl->img);
@@ -397,16 +397,16 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
       dynp=pngtop.dyn_pltop;
       while(dynp)
       {
-	if (dynp->icon==pic)
-	{
-	  IMGHDR *i=dynp->img;
-	  if (i)
-	  {
-	    UnlockSched();
-	    return(i);
-	  }	  
-	}
-	dynp=dynp->next;
+        if (dynp->icon==pic)
+        {
+          IMGHDR *i=dynp->img;
+          if (i)
+          {
+            UnlockSched();
+            return(i);
+          }       
+        }
+        dynp=dynp->next;
       }
       UnlockSched();
     }
@@ -419,7 +419,7 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
         if (i&mask40)  
         {
           char *next=strcpy_tolow(fname, config->IMAGE_FOLDER); // Картинка вроде как есть на диске
-	  //*fname=DEFAULT_DISK_N+'0';
+          //*fname=DEFAULT_DISK_N+'0';
           print10(next,pic);
           img=find_png_in_cache(fname);
           if (img) return (img);
@@ -429,26 +429,26 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
       }
       else 
       {
-	LockSched();
-	*bp|=mask80; // Записи нет, ставим флаг что есть
-	UnlockSched();
+        LockSched();
+        *bp|=mask80; // Записи нет, ставим флаг что есть
+        UnlockSched();
         char *next=strcpy_tolow(fname, config->IMAGE_FOLDER);
-	//*fname=DEFAULT_DISK_N+'0';
+        //*fname=DEFAULT_DISK_N+'0';
         print10(next,pic);
         img=find_png_in_cache(fname);
         if (img)
         {
-	  LockSched();
-	  *bp|=mask40;
-	  UnlockSched();
+          LockSched();
+          *bp|=mask40;
+          UnlockSched();
           return (img);
         }
         img=create_imghdr(fname,0);                 // Пробуем создать
         if (img)
         {
-	  LockSched();
-	  *bp|=mask40;
-	  UnlockSched();
+          LockSched();
+          *bp|=mask40;
+          UnlockSched();
         }
         else  return (0);
       }

@@ -253,8 +253,8 @@ __hash_err:
         {
             r_type = ELF32_R_TYPE(reltab[i].r_info);
             symtab_index = ELF32_R_SYM(reltab[i].r_info);
-	   
-	    Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
+       
+        Elf32_Sym *sym = ex->symtab? &ex->symtab[symtab_index] : 0;
             bind_type = sym ? ELF_ST_BIND(sym->st_info) : 0;
             reloc_type = sym ? ELF_ST_TYPE(sym->st_info) : 0;
             addr = (unsigned int*)(ex->body + reltab[i].r_offset - ex->v_addr);
@@ -263,7 +263,7 @@ __hash_err:
             {
             case R_ARM_NONE:
                 break;
-		
+        
             case R_ARM_RABS32:
                 printf("R_ARM_RABS32\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
@@ -274,21 +274,21 @@ __hash_err:
 
                 if( !ex->symtab )
                 {
-		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
-		    if(config->loader_warnings)
-		      ep_log(ex, dbg, csz);
-		    *addr = (unsigned int)ex->body;
-		    break;
+            int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
+            if(config->loader_warnings)
+              ep_log(ex, dbg, csz);
+            *addr = (unsigned int)ex->body;
+            break;
                 }
 
                 if( !ex->strtab )
                 {
-		    int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
-		    if(config->loader_warnings)
-		      ep_log(ex, dbg, csz);
-		    
-		    *addr = (unsigned int)ex->body;
-		    break;
+            int csz = sprintf(dbg, "warning: symtab not found, but relocation R_ARM_ABS32 is exist");
+            if(config->loader_warnings)
+              ep_log(ex, dbg, csz);
+            
+            *addr = (unsigned int)ex->body;
+            break;
                 }
 
                 /* на всякий случай, вдруг сум пустой будет */
@@ -347,7 +347,7 @@ skeep_err:
                 /* в ABS32 релоке в *addr всегда должен быть 0 */
                 *addr += func;
                 break;
-		
+        
             case R_ARM_RELATIVE:
                 printf("R_ARM_RELATIVE\n");
                 *addr += (unsigned int)(ex->body - ex->v_addr);
@@ -392,7 +392,7 @@ skeep_err:
                         else
                            func = sym->st_value;
                         goto skeep_err1;
-			
+            
 
                     default:
                         if(sym->st_value)
@@ -433,19 +433,19 @@ skeep_err1:
 
                 break;
 
-		
+        
             case R_ARM_COPY:
                 printf("R_ARM_COPY\n");
                 memcpy_a((void *) addr,
                          (void *)(ex->body + sym->st_value), sym->st_size);
                 break;
 
-		
-	    /* хз чо за релок, ни в одном лоадере его не встречал, 
-	     * хотя по описанию похож на R_ARM_REL32.
-	     * Но, если выполнить релокацию по описанию - эльфятник падает.
-	     * С пропуском - работает, так что хайтек.
-	     */
+        
+        /* хз чо за релок, ни в одном лоадере его не встречал, 
+         * хотя по описанию похож на R_ARM_REL32.
+         * Но, если выполнить релокацию по описанию - эльфятник падает.
+         * С пропуском - работает, так что хайтек.
+         */
             case R_ARM_THM_RPC22:
                 printf("R_ARM_THM_RPC22 stub\n");
                 break;
@@ -520,7 +520,7 @@ __arch int LoadSections(Elf32_Exec* ex)
         if(lseek(ex->fp, hdr_offset, S_SET) == -1) break;
         if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr)) != sizeof(Elf32_Phdr))
 #else
-	if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
+    if(lseek(ex->fp, hdr_offset, S_SET, &ferr, &ferr) == -1) break;
         if(fread(ex->fp, &phdrs[i], sizeof(Elf32_Phdr), &ferr) != sizeof(Elf32_Phdr))
 #endif
         {
@@ -573,7 +573,7 @@ __arch int LoadSections(Elf32_Exec* ex)
 #ifdef _test_linux
                         if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz) == phdr.p_filesz)
 #else
-			 if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
+             if(fread(ex->fp, ex->body + phdr.p_vaddr - ex->v_addr, phdr.p_filesz, &ferr) == phdr.p_filesz)
 #endif
                             break;
                     }

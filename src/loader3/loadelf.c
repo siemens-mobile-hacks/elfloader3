@@ -55,28 +55,28 @@ __arch Elf32_Exec* elfopen(const char* filename)
         ex->libs = 0;
         ex->hashtab = 0;
         ex->complete = 0;
-	ex->__is_ex_import = 0;
+        ex->__is_ex_import = 0;
         ex->meloaded = 0;
         ex->switab = (int*)AddrLibrary_a();
-	ex->fname = filename;
-	
-	const char *p = strrchr_a(filename, '\\'); 
-	if(p)
-	{
+        ex->fname = filename;
+        
+        const char *p = strrchr_a(filename, '\\'); 
+        if(p)
+        {
           ++p;
-	  ex->temp_env = malloc(p - filename + 2);
-	  memcpy_a(ex->temp_env, filename, p - filename);
-	  ex->temp_env[p - filename] = 0;
-	} else
-	  ex->temp_env = 0;
-	  
-	
-	
+          ex->temp_env = malloc(p - filename + 2);
+          memcpy_a(ex->temp_env, filename, p - filename);
+          ex->temp_env[p - filename] = 0;
+        } else
+          ex->temp_env = 0;
+          
+        
+        
         if(!LoadSections(ex))
         {
           ex->complete = 1;
           fclose(fp, &ferr);
-	  ex->fname = 0;
+          ex->fname = 0;
           return ex;
         }
         else

@@ -72,7 +72,7 @@ __arch unsigned int name_hash(const char* name)
         }*/
         /* оптимизация из uclibc */
         hash ^= hi;
-	hash ^= hi >> 24;
+    hash ^= hi >> 24;
         
         c = *name++;
     }
@@ -169,9 +169,9 @@ __arch char * envparse(const char *str, char *buf, int num)
     switch( start ? 1:0 )
     {
       case 0:
-	return 0;
+    return 0;
       case 1:
-	s = str + strlen(str);
+    s = str + strlen(str);
     }
   }
 
@@ -236,7 +236,7 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
         {
             printf(" '%s' is olready loaded\n", cmp_share_name);
             lib->users_cnt++;
-	    memset(dlerr, 0, 2);
+        memset(dlerr, 0, 2);
             return lib;
         }
         ready_libs = ready_libs->prev;
@@ -254,18 +254,18 @@ __arch Elf32_Lib* OpenLib(const char *name, Elf32_Exec *_ex)
       /* есть у нас временное окружение */
       if(_ex && _ex->temp_env)
       {
-	/* попробуем из него достать переменную */
-	ld_path = (const char*)__mem;
-	sprintf((char *)ld_path, "%s%s", _ex->temp_env, name);
-	
-	/* нету её... */
-	if(!__is_file_exist(ld_path))
-	{
-	  /* ну поищим по глобальным */
-	  ld_path = findShared(name);
-	}
+    /* попробуем из него достать переменную */
+    ld_path = (const char*)__mem;
+    sprintf((char *)ld_path, "%s%s", _ex->temp_env, name);
+    
+    /* нету её... */
+    if(!__is_file_exist(ld_path))
+    {
+      /* ну поищим по глобальным */
+      ld_path = findShared(name);
+    }
       } else
-	ld_path = findShared(name);
+    ld_path = findShared(name);
     }
     
     /* ничего не нашли */
@@ -330,7 +330,7 @@ try_again:
       memcpy_a(ex->temp_env, name, p - name);
       ex->temp_env[p - name] = 0;
     } else
-	ex->temp_env = 0;
+    ex->temp_env = 0;
 
     /* Начинаем копать структуру либы */
     if( LoadSections(ex) ){
@@ -445,12 +445,12 @@ __arch int CloseLib(Elf32_Lib* lib, int immediate)
         
         Elf32_Exec* ex = lib->ex;
 #ifndef _test_linux
-	if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
+    if(ex->dyn[DT_FINI]) ((LIB_FUNC*)(ex->body + ex->dyn[DT_FINI] - ex->v_addr))();
 #endif
-	
+    
         if(lib->glob_queue)
         {
-	    // Функция финализации
+        // Функция финализации
             Global_Queue* glob_queue = lib->glob_queue;
 
             Global_Queue* tmp = glob_queue->next;
