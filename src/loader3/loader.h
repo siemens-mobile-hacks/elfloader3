@@ -106,13 +106,13 @@ typedef struct
 } Elf32_Lib;
 
 enum EflLoadeDebugHookType {
-        ELFLOADER_DEBUG_HOOK_LOAD = 0,
-        ELFLOADER_DEBUG_HOOK_UNLOAD = 1,
+  ELFLOADER_DEBUG_HOOK_LOAD = 0,
+  ELFLOADER_DEBUG_HOOK_UNLOAD = 1,
 };
 
 typedef struct {
-        void *_r_debug;
-        void(*hook)(int type, void *param);
+  void *_r_debug;
+  void(*hook)(int type, void *param);
 } ElfloaderDebugHook;
 
 typedef int ELF_ENTRY(const char *, void *);
@@ -127,8 +127,8 @@ void ep_log(Elf32_Exec *ex, const char *data, int size);
 #define lprintf(...) { int __dsz = snprintf(tmp, 256, __VA_ARGS__);\
       ep_log(tmp, __dsz); }
 
-extern const uint32_t *pLIB_TOP;
-extern const uint32_t Library[];
+extern const uint32_t *pLIB_TOP;        /* blib */
+extern const uint32_t Library[];        /* library.vkp */
 
 #define __direct_strcmp(...) ((int (*)(char const *, char const *)) Library[0x0085])(__VA_ARGS__)
 

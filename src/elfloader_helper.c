@@ -315,11 +315,10 @@ void MyIDLECSMonCreate(void *data)
   if (!LoadDynSwilibFromFile()) {
     // ≈сли не смогли загрузить swi.blib, просто зеркалим library.vkp в раму
     uint32_t *dyn_swilib = malloc(0x4000);
-    if (dyn_swilib) {
-      memset(dyn_swilib, 0xFF, 0x4000);
-      SetDynSwilib(dyn_swilib);
-    }
+    memset(dyn_swilib, 0xFF, 0x4000);
+    SetDynSwilib(dyn_swilib);
   }
+
   InitLoaderSystem();
   InitPngBitMap();
   //strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
@@ -337,7 +336,7 @@ void MyIDLECSMonCreate(void *data)
     else
       LoadDaemons();
   }
-  
+
   extern BXR1(void *, void (*)(void *));
   BXR1(data,OldOnCreate);
 

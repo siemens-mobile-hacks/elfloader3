@@ -116,9 +116,16 @@ static bool ResolveBuiltinSymbols(Elf32_Exec *ex, unsigned int *addr, const char
             }
         break;
         case 0x0AB11643:
-            /* запросили указатель на таблицу функций */
+            /* запросили указатель на таблицу функций (legacy) */
             if (__direct_strcmp(name, "__sys_switab_addres") == 0) {
                 *addr = (unsigned int)ex->switab;
+                return true;
+            }
+        break;
+        case 0x06AE0C22:
+            /* запросили указатель на таблицу функций (modern) */
+            if (__direct_strcmp(name, "__switab") == 0) {
+                *addr = (unsigned int)&pLIB_TOP;
                 return true;
             }
         break;
