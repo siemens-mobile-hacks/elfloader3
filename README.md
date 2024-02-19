@@ -16,8 +16,8 @@
    Раньше могла быть ситуация, когда конфиг создаётся на `0:\Zbin\etc\Elfpack3.bcfg`, но пути в нём остаются `4:\...`.
   
    Теперь конфиг создаётся с правильным диском.
-3. `__sys_switab_addres` теперь предоставляемся самим ELFLoader, вместо libcrt_helper.so.
-4. Встроенные символы `__ex` и `__sys_switab_addres` теперь работают так же и в `R_ARM_GLOB_DAT`.
+3. `__sys_switab_addres` и `__swilib` теперь предоставляются самим ELFLoader, вместо libcrt_helper.so.
+4. Встроенные символы `__ex`, `__sys_switab_addres` и `__swilib` теперь работают так же и в `R_ARM_GLOB_DAT`.
 5. Копирование библиотеки функций в RAM перенесено из libcrt_helper.so в сам ELFLoader.
 6. Все несуществующие функции теперь не 0xFFFFFFFF, а 0xFFFFxxx0, где **xxx** это swi-номер.
    
