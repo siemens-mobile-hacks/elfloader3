@@ -32,13 +32,13 @@ done
 
 TIMESTAMP="$(date +'%d.%m.%Y')"
 
-# Removed: S75sw47 S75sw40 S68sw47
 MODELS=(
 	"C72sw22" "C75sw22" "C75sw24" "C81sw51" "CX70sw56" "CX75sw13" "CX75sw25" "E71sw45" "EL71sw45" "M75sw25"
-	"S65sw58" "S68sw52" "S75sw52" "SK65sw50" "SL65sw53" "SL75sw47" "SL75sw52"
+	"S65sw58" "S68sw47" "S68sw52" "S75sw40" "S75sw47" "S75sw52" "SK65sw50" "SL65sw53" "SL75sw47" "SL75sw52"
 	"CL61sw00_db128" "CF75sw23"
 )
 
+# for testing
 # MODELS=("E71sw45" "CX75sw25")
 
 if [ $no_generate_vkp == 0 ]; then
