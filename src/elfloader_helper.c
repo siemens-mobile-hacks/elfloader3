@@ -180,10 +180,16 @@ static void LoadDaemons(void)
   {
     do
     {
-      //strcpy(name,path);
-      name[pathlen]=0;
-      strcat(name,de.file_name);
-      elfload(name,0,0,0);
+      name[pathlen] = 0;
+      strcat(name, de.file_name);
+      strcat(name, ".skip");
+      
+      // Запускаем .elf только если рядом отсутствует файл "NAME.elf.skip"
+      if (get_file_size(name) < 0) {
+        name[pathlen] = 0;
+        strcat(name, de.file_name);
+        elfload(name, 0, 0, 0);
+      }
     }
     while(FindNextFile(&de,&err));
   }
@@ -198,16 +204,23 @@ int get_file_size(const char * fname)
   else return (fs.size);
 }
 
+// Проверяем совместимость swi.blib с прошивкой
+static bool IsSwiBlibCompatible(uint32_t *new_lib) {
+  // Просто проверим 4 рандомных функции, без которых ELFLoader не работал бы
+  const int funcs[] = { 0x17, 0x18, 0x19, 0x1A };
+  for (int i = 0; i < (sizeof(funcs) / sizeof(funcs[0])); i++) {
+    if (new_lib[funcs[i]] != 0xFFFFFFFF && Library[funcs[i]] != new_lib[funcs[i]])
+      return false;
+  }
+  return true;
+}
+
 // Функция подмены swilib
-static int SetDynSwilib(uint32_t *new_swilib) {
+static void SetDynSwilib(uint32_t *new_swilib) {
   for (int i = 0; i < 0x1000; i++) {
     // Если функции нет в swi.blib, используем аналогичную из library.vkp
     if (new_swilib[i] == 0xFFFFFFFF)
       new_swilib[i] = Library[i];
-    
-    // Проверим на конфликт функций
-    if (Library[i] != 0xFFFFFFFF && new_swilib[i] != 0xFFFFFFFF && new_swilib[i] != Library[i])
-      return i; // Вернём функцию, с которой у нас проблема
     
     // Специальный маркер о том, что функции не существует
     // Используется для GCC, где невозможно использовать SWI
@@ -217,8 +230,6 @@ static int SetDynSwilib(uint32_t *new_swilib) {
   
   // Заменяем таблицу функций
   pLIB_TOP = new_swilib;
-  
-  return -1;
 }
 
 // Загрузка swi.blib
@@ -249,15 +260,14 @@ static bool LoadDynSwilibFromFile(void)
 
   fclose(fd, &err);
 
-  // Если всё ок, заменяем библиотеку функций
-  int conflicted_func = SetDynSwilib(new_lib);
-  if (conflicted_func != -1) {
-    char tmp[64];
-    sprintf(tmp, "swi.blib function %d conflict!", conflicted_func);
-    l_msg(1, (int) tmp);
+  if (!IsSwiBlibCompatible(new_lib)) {
+    l_msg(1, (int) "swi.blib is not compatible with your phone!");
     mfree(new_lib);
     return false;
   }
+
+  // Если всё ок, заменяем библиотеку функций
+  SetDynSwilib(new_lib);
   
   return true;
 }
@@ -312,7 +322,10 @@ void MyIDLECSMonCreate(void *data)
   CreateHELPER_PROC();
   InitConfig();
 
-  if (!LoadDynSwilibFromFile()) {
+  bool is_safe_mode = *RamPressedKey_a() == '#';
+
+  // Загружаем swi.blib, но только если не активирован SafeMode
+  if (is_safe_mode || !LoadDynSwilibFromFile()) {
     // Если не смогли загрузить swi.blib, просто зеркалим library.vkp в раму
     uint32_t *dyn_swilib = malloc(0x4000);
     memset(dyn_swilib, 0xFF, 0x4000);
@@ -328,13 +341,15 @@ void MyIDLECSMonCreate(void *data)
   sprintf(bigicons_str, "%self_big.png", config->IMAGES_PATH);
   RegExplorerExt(&elf_reg);
 
-  /* ну а хуле, плюшки для блондинок */
-  if(*RamPressedKey_a() != '#')
+  if(!is_safe_mode)
   {
-    if(config->load_in_suproc)
+    if(config->load_in_suproc) {
+      // Медленный, но безопасный запуск
       SUBPROC_a((void *)LoadDaemons, NULL);
-    else
+    } else {
+      // Более быстрый запуск, но не со всеми ELF совместимо
       LoadDaemons();
+    }
   }
 
   extern BXR1(void *, void (*)(void *));
