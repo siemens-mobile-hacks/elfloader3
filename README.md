@@ -1,5 +1,8 @@
 # Changelog
-## 2024.02.19 - [@Azq2](https://github.com/Azq2)
+## 2024.02.27 - [@Azq2](https://github.com/Azq2)
+- Исправлена область RAM используемая ELFLoader для S75sw52 (спасибо Feyman)
+
+## 2024.02.20 - [@Azq2](https://github.com/Azq2)
 
 **Багфиксы:**
 1. Заменил все "way" на "path"
