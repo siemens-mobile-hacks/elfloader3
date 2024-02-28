@@ -70,7 +70,7 @@ for my $model (sort keys %$model2patch) {
 	$patch_data =~ s/\r\n|\n/\r\n/g;
 	$patch_data =~ s/^\s+|\s+$//g;
 	
-	$fields->{is_beta} = 2;
+	$fields->{is_beta} = 1;
 	$fields->{p_ver} = $version;
 	$fields->{p_name_RU} = "ElfPack [$date]";
 	$fields->{p_name_EN} = "ElfPack [$date]";
