@@ -37,6 +37,8 @@ for my $model (sort keys %$model2patch) {
 	my ($patch_id) = $old_patch =~ /id=(\d+)/;
 	die "Invalid patch URL: $old_patch" if !$patch_id;
 	
+	# next if $patch_id != 10732;
+	
 	print "[$model]\n";
 	print "ELFLoader: $file\n";
 	print "Old patch: $old_patch\n";
@@ -52,12 +54,14 @@ for my $model (sort keys %$model2patch) {
 	my $description = join("\n",
 		"[b]${date} - v${version}[/b]",
 		"Список изменений и исходники: [url]https://github.com/siemens-mobile-hacks/elfloader3/blob/master/README.md[/url]",
-		"SDK: [url]https://github.com/siemens-mobile-hacks/sdk[/url]",
+		"SDK для разработчиков: [url]https://github.com/siemens-mobile-hacks/sdk[/url]",
+		"[b][color:darkgreen]Для багов:[/color][/b] [url]https://github.com/siemens-mobile-hacks/elfloader3/issues[/url]",
 		"",
 		"[EN]:",
 		"[b]${date} - v${version}[/b]",
 		"Changelog and sources: [url]https://github.com/siemens-mobile-hacks/elfloader3/blob/master/README.md[/url]",
-		"SDK: [url]https://github.com/siemens-mobile-hacks/sdk[/url]"
+		"SDK for developers: [url]https://github.com/siemens-mobile-hacks/sdk[/url]",
+		"[b][color:darkgreen]Bugtracker:[/color][/b] [url]https://github.com/siemens-mobile-hacks/elfloader3/issues[/url]",
 	);
 	
 	my $old_fields = getPatchData($patch_id);
