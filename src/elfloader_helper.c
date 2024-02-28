@@ -279,7 +279,7 @@ __no_init char bigicons_str[32];
 
 
 #pragma segment="DATA_Z"
-void MyIDLECSMonCreate(void *data)
+__thumb void MyIDLECSMonCreate_t(void *data)
 {
   /* рамные сегменты с приставко Z должны обнулятся, их никто не обнулял, как оно работало вообще??? */
   void *must_zero = (void *)__segment_begin("DATA_Z");
@@ -357,6 +357,10 @@ void MyIDLECSMonCreate(void *data)
 
   //  OldOnCreate(data);
   //  asm("NOP\n");
+}
+
+__arm void MyIDLECSMonCreate(void *data) {
+  MyIDLECSMonCreate_t(data);
 }
 
 static unsigned int char8to16(int c)
@@ -513,7 +517,7 @@ __arm TREGEXPLEXT *EXT2_REALLOC(void)
 
 
 #ifdef NEWSGOLD
-MyShowMSG(int p1, int p2)
+__arm MyShowMSG(int p1, int p2)
 {
 #ifdef ELKA
   if (p2!=0x1DD1)
@@ -542,7 +546,7 @@ __arm void PropertyPatch(WSHDR *unk_foldername, WSHDR *unk_filename)
 
 #endif
 
-void FUNC_ABORT(int f)
+__arm void FUNC_ABORT(int f)
 {
   char s[32];
   extern void StoreErrInfoAndAbort(int code,const char *module_name,int type,int unk3);
