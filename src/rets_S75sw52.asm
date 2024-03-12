@@ -1,7 +1,5 @@
-
-
-
 #include "ep3.asm"
+#include "ll_init.asm"
 
 	RSEG	DATA_N
 	RSEG	SWILIB_FUNC1B8_1BB:CODE
@@ -12,8 +10,6 @@
 	DCD	pngtop
 	DCD	pLIB_TOP
 	DCD	SFE(DATA_N)
-        
-
 
 defadr	MACRO	a,b
 	PUBLIC	a
@@ -43,12 +39,8 @@ PITgetN:
 PITret:
 	DCD	0xA0976192+1
 
-
 	defadr	StoreErrInfoAndAbort,   0xA01CEE50
 	defadr	StoreErrString,         0xA01CED1C
-        defadr  NU_Sleep,               0xA00A275C
-        defadr  NU_Suspend_Task,        0xA00A26FC
-        defadr  NU_Resume_Task,         0xA00A26D8
-        defadr  NU_Current_Task_Pointer,0xA00A2030
+	defadr  OldFuncInOsInit,        0xA0231300 ; Hooked function in OS initialization (see PATCH_LL_INIT_HOOK)
 
 	END

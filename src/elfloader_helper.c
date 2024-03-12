@@ -151,9 +151,7 @@ __arm void MyIDLECSMonClose(void *data)
   KillGBSproc(HELPER_CEPID);
   dlclean_cache();
   clearenv();
-  if(config)
-    mfree(config);
-  
+
   BXR1(data,OldOnClose);
   //  OldOnClose(data);
   //  asm("NOP\n");
@@ -204,6 +202,21 @@ int get_file_size(const char * fname)
   else return (fs.size);
 }
 
+static inline uint32_t *AllocSwilib(void) {
+#ifdef USE_STATIC_MEMORY
+  static uint32_t swilib_storage[4096] = { 0 };
+  return swilib_storage;
+#else
+  return malloc(sizeof(uint32_t) * 4096);
+#endif
+}
+
+static inline void FreeSwilib(uint32_t *swilib) {
+#ifndef USE_STATIC_MEMORY
+  mfree(swilib);
+#endif
+}
+
 // Проверяем совместимость swi.blib с прошивкой
 static bool IsSwiBlibCompatible(uint32_t *new_lib) {
   // Просто проверим 4 рандомных функции, без которых ELFLoader не работал бы
@@ -217,6 +230,11 @@ static bool IsSwiBlibCompatible(uint32_t *new_lib) {
 
 // Функция подмены swilib
 static void SetDynSwilib(uint32_t *new_swilib) {
+  if (!new_swilib) {
+    new_swilib = AllocSwilib();
+    memset(new_swilib, 0xFF, sizeof(uint32_t) * 4096);
+  }
+
   for (int i = 0; i < 0x1000; i++) {
     // Если функции нет в swi.blib, используем аналогичную из library.vkp
     if (new_swilib[i] == 0xFFFFFFFF)
@@ -250,11 +268,11 @@ static bool LoadDynSwilibFromFile(void)
   if (fd < 0)
     return 0;
 
-  uint32_t *new_lib = malloc(0x4000);
+  uint32_t *new_lib = AllocSwilib();
   if (!new_lib || fread(fd, new_lib, sz, &err) != 0x4000) {
     l_msg(1, (int) "Can't read swi.blib!");
     fclose(fd, &err);
-    mfree(new_lib);
+    FreeSwilib(new_lib);
     return false;
   }
 
@@ -262,7 +280,7 @@ static bool LoadDynSwilibFromFile(void)
 
   if (!IsSwiBlibCompatible(new_lib)) {
     l_msg(1, (int) "swi.blib is not compatible with your phone!");
-    mfree(new_lib);
+    FreeSwilib(new_lib);
     return false;
   }
 
@@ -274,18 +292,24 @@ static bool LoadDynSwilibFromFile(void)
 
 extern void InitPngBitMap(void);
 
-__no_init char smallicons_str[32];
-__no_init char bigicons_str[32];
-
+char smallicons_str[32] = { 0 };
+char bigicons_str[32] = { 0 };
 
 #pragma segment="DATA_Z"
+static __thumb void InitLoaderMemory() {
+  unsigned char *mem = __segment_begin("DATA_Z");
+  while (mem != __segment_end("DATA_Z")) {
+    *mem++ = 0;
+  }
+}
+
 __thumb void MyIDLECSMonCreate_t(void *data)
 {
-  /* рамные сегменты с приставко Z должны обнулятся, их никто не обнулял, как оно работало вообще??? */
-  void *must_zero = (void *)__segment_begin("DATA_Z");
-  size_t len = (unsigned int)__segment_end("DATA_Z") - (unsigned int)__segment_begin("DATA_Z");
-  memset(must_zero, 0, len);
-  
+#ifndef USE_LL_INIT
+  // Старый вариант инициализации, без врезки в инициализацию ОС
+  InitLoaderMemory();
+#endif
+
   static const int smallicons[2]={(int)smallicons_str,0};
   static const int bigicons[2]={(int)bigicons_str,0};
   
@@ -327,9 +351,7 @@ __thumb void MyIDLECSMonCreate_t(void *data)
   // Загружаем swi.blib, но только если не активирован SafeMode
   if (is_safe_mode || !LoadDynSwilibFromFile()) {
     // Если не смогли загрузить swi.blib, просто зеркалим library.vkp в раму
-    uint32_t *dyn_swilib = malloc(0x4000);
-    memset(dyn_swilib, 0xFF, 0x4000);
-    SetDynSwilib(dyn_swilib);
+    SetDynSwilib(NULL);
   }
 
   InitLoaderSystem();
@@ -418,12 +440,11 @@ static __arm void DoUnknownFileType(WSHDR *filename)
   FreeWS(wsmime);
 }
 
-#ifdef NEWSGOLD 
+#ifdef NEWSGOLD
 __no_init int *EXT2_AREA;
 #ifdef ELKA
 __no_init int EXT2_CNT @ "REGEXPL_CNT";
 #endif
-
 #else
 __no_init TREGEXPLEXT *EXT2_AREA;
 __no_init int EXT2_CNT @ "REGEXPL_CNT";
@@ -517,17 +538,13 @@ __arm TREGEXPLEXT *EXT2_REALLOC(void)
 
 
 #ifdef NEWSGOLD
-__arm MyShowMSG(int p1, int p2)
+__thumb MyShowMSG(int p1, int p2)
 {
-#ifdef ELKA
   if (p2!=0x1DD1)
-#else
-    if (p2!=(0x1DCC+5))
-#endif    
-    {
-      OldShowMsg(p1,p2);
-      return;
-    }
+  {
+    OldShowMsg(p1, p2);
+    return;
+  }
   asm("MOVS R0,R6\n");
   DoUnknownFileType((WSHDR *)p1);
 }
@@ -556,6 +573,15 @@ __arm void FUNC_ABORT(int f)
   loopback2();
   StoreErrInfoAndAbort(0xFFFF,"\1\1No function in lib\xA1",2,2);
 }
+
+#ifdef USE_LL_INIT
+// Эта функция вызывается на стадии ранней инициализации ОС (после инициализации ExtRAM)
+__arm void LowLevelInit()
+{
+  EXT2_AREA = NULL;
+  InitLoaderMemory();
+}
+#endif
 
 //Патчи
 #pragma diag_suppress=Pe177

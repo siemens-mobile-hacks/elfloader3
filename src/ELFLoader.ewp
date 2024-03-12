@@ -16621,6 +16621,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
           <state>__PNG_SWI_LIB_</state>
         </option>
         <option>
@@ -16889,6 +16891,8 @@
         <option>
           <name>ADefines</name>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>AList</name>

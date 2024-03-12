@@ -319,7 +319,7 @@ __thumb IMGHDR* create_imghdr(const char *fname, int type)
   return (img_hc);
 }
 
-volatile __no_init PNGTOP_DESC pngtop; 
+volatile PNGTOP_DESC pngtop = { 0 }; 
 
 #pragma inline
 static int tolower(int C)
@@ -478,6 +478,17 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
   unsigned int mask80;
   unsigned int mask40;
   char *bp;
+
+  // Пока ELFPack ещё не запустился, всё, что мы можем, это загружать картинки по полному пути (без кэша)
+  if (!pngtop.bitmap) {
+    if ((pic >> 28) == 0xA) {
+      strcpy_tolow(fname, (char *) pic);
+      img = create_imghdr(fname, 0);
+      return img ? img : (IMGHDR *) &empty_img;
+    }
+    return NULL;
+  }
+
   if ((pic>>28)==0xA)
   {
     strcpy_tolow(fname, (char*)pic);
@@ -508,7 +519,7 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
       }
       UnlockSched();
     }
-    if ((pngtop.bitmap) && (pic<20000))
+    if ((pic<20000))
     {
       mask40=(mask80=0x80UL>>((pic&3)<<1))>>1;
       bp=pngtop.bitmap+(pic>>2);
@@ -562,7 +573,6 @@ __arm IMGHDR* PatchGetPIT(unsigned int pic)
 
 void InitPngBitMap(void)
 {
-  memset((void *)&pngtop, 0, sizeof(pngtop));
   if (!pngtop.bitmap)
   {
     pngtop.bitmap=malloc(20000/8*2);

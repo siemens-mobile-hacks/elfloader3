@@ -3,8 +3,11 @@
 //0x20050
 //A0074000
 
-// New RAM address by (c) Feyman
--Z(DATA)DATA_Z,DATA_I,DATA_N=A8D7AC00-A8D7B54F
+// ========================= RAM ==============================
+// Great thanks to Feynman for the new RAM addresses.
+-Z(DATA)DATA_Z,DATA_I,DATA_N=A8E9FC00-A8EA4C00  // 20k unsued memory block
+-Z(CODE)PATCH_LL_INIT_HOOK=A0233384-A0233388    // BL to any void-function in low level OS initialization (after ExtRAM init)
+// ============================================================
 
 -Z(CODE)PATCH_ONCREATE=A042E514-A042E517
 -Z(CODE)PATCH_ONCLOSE=A042E528-A042E52B

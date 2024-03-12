@@ -43,13 +43,7 @@ PITgetN:
 PITret:
 	DCD	0xA07FBC06+1
 
-
 	defadr	StoreErrInfoAndAbort,0xA018DB5C
 	defadr	StoreErrString,0xA018DA28
-	defadr  NU_Sleep,               0xA00A1FB8
-        defadr  NU_Suspend_Task,        0xA00A1F58
-        defadr  NU_Resume_Task,         0xA00A1F34
-        defadr  NU_Current_Task_Pointer,0xA00A188C
-
 
 	END

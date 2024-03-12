@@ -3,9 +3,8 @@
 #include "conf_loader.h"
 #include "config_struct.h"
 
-
-config_structure_t *config = 0;
-__no_init const char *successed_config_filename;
+config_structure_t *config = NULL;
+const char *successed_config_filename = NULL;
 
 // Обновляем диск у всех путей, чтобы юзеру не приходилось делать это вручную
 static inline void SyncDefaultDisk(config_structure_t *config, char disk) {
@@ -57,9 +56,14 @@ static int LoadConfigData(const char *fname)
 
 void InitConfig()
 {
-  /* теперь под конфиг выделяется явный хиповый адрес */
-  /* его размер орграничевается теперь только лишь рамой */
+#ifdef USE_STATIC_MEMORY
+  // Если памяти завались, юзаем статическую аллокацию
+  static config_structure_t config_storage = { 0 };
+  config = &config_storage;
+#else
+  // Иначе тратим хип
   config = malloc(sizeof(config_structure_t));
+#endif
   memcpy_a(config, &config_structure, sizeof(config_structure_t));
   
   if( LoadConfigData("4:\\ZBin\\etc\\ElfPack.bcfg")<0)
