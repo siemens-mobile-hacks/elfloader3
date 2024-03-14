@@ -7,6 +7,9 @@
 
 int dlclean_cache();
 const uint32_t *pLIB_TOP = NULL;
+__no_init bool is_initialized;
+
+extern BXR1(void *, void (*)(void *));
 
 static __arm char *RamPressedKey_a() {
   return RamPressedKey();
@@ -143,18 +146,6 @@ void SEQKILLER_impl(void *data, void(*next_in_seq)(void *), void *data_to_kill)
 {
   next_in_seq(data);
   mfree(data_to_kill);
-}
-
-__arm void MyIDLECSMonClose(void *data)
-{
-  extern BXR1(void *, void (*)(void *));
-  KillGBSproc(HELPER_CEPID);
-  dlclean_cache();
-  clearenv();
-
-  BXR1(data,OldOnClose);
-  //  OldOnClose(data);
-  //  asm("NOP\n");
 }
 
 static void LoadDaemons(void)
@@ -303,7 +294,7 @@ static __thumb void InitLoaderMemory() {
   }
 }
 
-__thumb void MyIDLECSMonCreate_t(void *data)
+__thumb void InitLoader(void *data)
 {
 #ifndef USE_LL_INIT
   // Старый вариант инициализации, без врезки в инициализацию ОС
@@ -373,16 +364,25 @@ __thumb void MyIDLECSMonCreate_t(void *data)
       LoadDaemons();
     }
   }
-
-  extern BXR1(void *, void (*)(void *));
-  BXR1(data,OldOnCreate);
-
-  //  OldOnCreate(data);
-  //  asm("NOP\n");
 }
 
-__arm void MyIDLECSMonCreate(void *data) {
-  MyIDLECSMonCreate_t(data);
+// Вызывается при создании IDLE CSM
+__arm void MyIDLECSMonCreate(void *data)
+{
+  if (!is_initialized) {
+    is_initialized = true;
+    InitLoader(data);
+  }
+  BXR1(data, OldOnCreate);
+}
+
+// Вызывается при закрытии IDLE CSM
+__arm void MyIDLECSMonClose(void *data)
+{
+  // Раньше тут был деструктор ELFLoader, но в нём нет смысла:
+  // 1. Какой смысл освобождать ресурсы при ВЫКЛЮЧЕНИИ телефона?
+  // 2. IDLE CSM сам по себе может закрыться во время нормальной работы телефона (например, когда найдётся новая сеть)
+  BXR1(data, OldOnClose);
 }
 
 static unsigned int char8to16(int c)
@@ -579,6 +579,7 @@ __arm void FUNC_ABORT(int f)
 __arm void LowLevelInit()
 {
   EXT2_AREA = NULL;
+  is_initialized = false;
   InitLoaderMemory();
 }
 #endif

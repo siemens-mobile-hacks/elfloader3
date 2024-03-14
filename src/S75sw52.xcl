@@ -5,7 +5,7 @@
 
 // ========================= RAM ==============================
 // Great thanks to Feynman for the new RAM addresses.
--Z(DATA)DATA_Z,DATA_I,DATA_N=A8E9FC00-A8EA4C00  // 20k unsued memory block
+-Z(DATA)DATA_Z,DATA_I,DATA_N=A8EA0C00-A8EA5C00  // 20k unused memory block
 -Z(CODE)PATCH_LL_INIT_HOOK=A0233384-A0233388    // BL to any void-function in low level OS initialization (after ExtRAM init)
 // ============================================================
 

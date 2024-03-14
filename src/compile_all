@@ -39,7 +39,7 @@ MODELS=(
 )
 
 # for testing
-# MODELS=("S75sw52")
+MODELS=("S75sw52")
 
 if [ $no_generate_vkp == 0 ]; then
 	for model in ${MODELS[*]}; do

@@ -5,7 +5,10 @@
 
 //A0074000
 
--Z(DATA)DATA_Z,CONFIG_DATA_I,DATA_N=A8D9F004-A8D9F963
+// ========================= RAM ==============================
+-Z(DATA)DATA_Z,DATA_I,DATA_N=A8F69F00-A8F6EF00  // 20k unused memory block
+-Z(CODE)PATCH_LL_INIT_HOOK=A0548824-A0548828    // BL to any void-function in low level OS initialization (after ExtRAM init)
+// ============================================================
 
 -Z(CODE)PATCH_ONCREATE=A0853F98-A0853F9B
 -Z(CODE)PATCH_ONCLOSE=A0853FAC-A0853FAF

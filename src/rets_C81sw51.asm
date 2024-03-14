@@ -1,5 +1,5 @@
-//C81v51
 #include "ep3.asm"
+#include "ll_init.asm"
 
 
 	RSEG	DATA_N
@@ -45,6 +45,7 @@ PITret:
 
 	defadr	StoreErrInfoAndAbort,0xA01CE3F8
 	defadr	StoreErrString,0xA01CE2C4
+	defadr  OldFuncInOsInit,0xA02305E4 ; Hooked function in OS initialization (see PATCH_LL_INIT_HOOK)
 
 
 	END
