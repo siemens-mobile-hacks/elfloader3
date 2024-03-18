@@ -41,6 +41,8 @@ MODELS=(
 # for testing
 # MODELS=("S75sw52")
 
+git checkout ../release/*.vkp
+
 if [ $no_generate_vkp == 0 ]; then
 	for model in ${MODELS[*]}; do
 		echo "CCLD  $model..."

@@ -68,7 +68,9 @@ for my $model (sort keys %$model2patch) {
 	my $fields = { %$old_fields };
 	
 	$patch_data =~ s/\r\n|\n/\r\n/g;
+	$patch_data =~ s/^;.*?\r\n\r\n//gsi;
 	$patch_data =~ s/^\s+|\s+$//g;
+	$patch_data .= "\r\n";
 	
 	$fields->{is_beta} = 1;
 	$fields->{p_ver} = $version;
