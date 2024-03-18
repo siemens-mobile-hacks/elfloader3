@@ -1,3 +1,10 @@
+;M75sw25
+;ELFLoader
+;(c) Z.Vova, Ganster
+;Version: 3.2.2
+;Date: 18.03.2024
+
+
 ;FSWI_PATCH1
 0x00092BE0: 1A0000EA DCF09FE5
 ;FSWI_PATCH3,FSWI_PATCH2

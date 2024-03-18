@@ -1,3 +1,10 @@
+;EL71sw45
+;ELFLoader
+;(c) Z.Vova, Ganster
+;Version: 3.2.2
+;Date: 18.03.2024
+
+
 ;SWILIB_FUNC171,SWILIB_FUNC172
 #pragma enable old_equal_ff
 0x000745C4: 0C8407A0F48307A0
