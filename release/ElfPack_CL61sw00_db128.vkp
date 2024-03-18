@@ -1,10 +1,3 @@
-;CL61sw00_db128
-;ELFLoader
-;(c) Z.Vova, Ganster
-;Version: 3.2.2
-;Date: 14.03.2024
-
-
 ;PATCH_NO_BROWSE_TXT
 0x0016E106: 0830 3030
 ;PATCH_GET_PIT

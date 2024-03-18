@@ -24,10 +24,7 @@ else
 	wine elf2vkp.exe "${out}/ElfLoader.elf" "${out}/ElfLoader3.vkp" &> /dev/null
 fi
 
-echo ";"$model > $out_vkp
-cat "$root/copyright.txt" >> $out_vkp
-echo ";Date: "${TIMESTAMP} >> $out_vkp
-echo -e "\n" >> $out_vkp
+rm -f $out_vkp
 
 # если фул не найден - старые данные == FF
 if [ $FF_EXISTS == 0 ]; then
