@@ -39,7 +39,7 @@ MODELS=(
 )
 
 # for testing
-# MODELS=("S75sw52")
+# MODELS=("C81sw51")
 
 git checkout ../release/*.vkp
 

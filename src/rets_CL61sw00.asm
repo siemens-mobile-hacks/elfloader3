@@ -47,5 +47,8 @@ PITret:
 	defadr	StoreErrInfoAndAbort,0xA0737838
 	defadr	StoreErrString,0xA0737704
 
+; <config>
+
+; </config>
 
 	END

@@ -139,6 +139,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
           <state>__PNG_SWI_LIB_</state>
         </option>
         <option>
@@ -1788,6 +1790,8 @@
           <state>NDEBUG</state>
           <state>ELKA</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -2613,6 +2617,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -3437,6 +3443,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -6749,6 +6757,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -14161,6 +14171,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -15809,6 +15821,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -19110,6 +19124,8 @@
           <name>CCDefines</name>
           <state>NDEBUG</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -19935,6 +19951,8 @@
           <state>NDEBUG</state>
           <state>ELKA</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -20761,6 +20779,8 @@
           <state>NDEBUG</state>
           <state>ELKA</state>
           <state>NEWSGOLD</state>
+          <state>USE_LL_INIT</state>
+          <state>USE_STATIC_MEMORY</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -21531,6 +21551,8 @@
             <state>NDEBUG</state>
             <state>NEWSGOLD</state>
             <state>ELKA</state>
+            <state>USE_LL_INIT</state>
+            <state>USE_STATIC_MEMORY</state>
           </option>
           <option>
             <name>CCPreprocFile</name>
@@ -21757,6 +21779,8 @@
             <state>NDEBUG</state>
             <state>NEWSGOLD</state>
             <state>ELKA</state>
+            <state>USE_LL_INIT</state>
+            <state>USE_STATIC_MEMORY</state>
           </option>
           <option>
             <name>CCPreprocFile</name>
@@ -21983,6 +22007,8 @@
             <state>NDEBUG</state>
             <state>NEWSGOLD</state>
             <state>ELKA</state>
+            <state>USE_LL_INIT</state>
+            <state>USE_STATIC_MEMORY</state>
           </option>
           <option>
             <name>CCPreprocFile</name>
@@ -22209,6 +22235,8 @@
             <state>NDEBUG</state>
             <state>NEWSGOLD</state>
             <state>ELKA</state>
+            <state>USE_LL_INIT</state>
+            <state>USE_STATIC_MEMORY</state>
           </option>
           <option>
             <name>CCPreprocFile</name>

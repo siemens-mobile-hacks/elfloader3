@@ -60,4 +60,8 @@ FWriteOld:
   defadr  StoreErrInfoAndAbort,0xA07CD184
   defadr  StoreErrString,0xA07CCFA8
 
+; <config>
+
+; </config>
+
   END

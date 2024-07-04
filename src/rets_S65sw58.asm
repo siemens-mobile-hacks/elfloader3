@@ -58,8 +58,12 @@ FReadOld:
 FWriteOld:
 	DCD	0xA122EDD8       
         
-        defadr	StoreErrInfoAndAbort,0xA113BE98
+    defadr	StoreErrInfoAndAbort,0xA113BE98
 	defadr	StoreErrString,0xA113BCBC
+
+; <config>
+
+; </config>
 
 	END
         
