@@ -54,20 +54,45 @@ static int LoadConfigData(const char *fname)
   return(result);
 }
 
-void InitConfig()
-{
-#ifdef USE_STATIC_MEMORY
-  // Если памяти завались, юзаем статическую аллокацию
-  static config_structure_t config_storage = { 0 };
-  config = &config_storage;
+static char FindPath(char *path) {
+#ifdef NEWSGOLD
+    const char disks[] = { '4', '0', '2', '1' };
 #else
-  // Иначе тратим хип
-  config = malloc(sizeof(config_structure_t));
+    const char disks[] = { '4', '0', 'b', 'a' };
 #endif
-  memcpy_a(config, &config_structure, sizeof(config_structure_t));
-  
-  if( LoadConfigData("4:\\ZBin\\etc\\ElfPack.bcfg")<0)
-  {
-    LoadConfigData("0:\\ZBin\\etc\\ElfPack.bcfg");
-  }
+    FSTATS fs;
+    unsigned int err;
+
+    for (int i = 0; i < (sizeof(disks) / sizeof(disks[0])); i++) {
+        path[0] = disks[i];
+        if (GetFileStats(path, &fs, &err) >= 0)
+            return disks[i];
+    }
+
+    return 0;
+}
+
+void InitConfig() {
+#ifdef USE_STATIC_MEMORY
+    // Если памяти завались, юзаем статическую аллокацию
+    static config_structure_t config_storage = { 0 };
+    config = &config_storage;
+#else
+    // Иначе тратим хип
+    config = malloc(sizeof(config_structure_t));
+#endif
+
+    char config_path[] = "?:\\ZBin\\etc\\ElfPack.bcfg";
+    int disk = FindPath(config_path);
+    if (!disk) {
+        char zbin_etc_path[] = "?:\\ZBin\\etc";
+        disk = FindPath(zbin_etc_path);
+        if (!disk) {
+            char zbin_path[] = "?:\\ZBin";
+            disk = FindPath(zbin_path);
+        }
+    }
+
+    config_path[0] = disk ? disk : '0';
+    LoadConfigData(config_path);
 }

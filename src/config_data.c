@@ -9,7 +9,7 @@ const config_structure_t config_structure =
   {CFG_UINT, "Alpha-chan threshold", 0,255},
   128,
   
-  {CFG_UINT,"PNG cache size",20,200},
+  {CFG_UINT,"PNG cache size",20,512},
   50,
   
   {CFG_CBOX,"Default bit-depth",0,3},
@@ -24,25 +24,13 @@ const config_structure_t config_structure =
   1,
   
   {CFG_STR_UTF8, "Path to images", 0, 127},
-#if NEWSGOLD || X75
-  "4:\\ZBin\\img\\",
-#else
   "0:\\ZBin\\img\\",
-#endif
 
   {CFG_STR_UTF8, "Path to daemons", 0, 127},
-#if NEWSGOLD || X75
-  "4:\\ZBin\\Daemons\\",
-#else
   "0:\\ZBin\\Daemons\\",
-#endif
   
   {CFG_STR_UTF8, "Path to swi.blib", 0, 127},
-#if NEWSGOLD || X75
-  "4:\\ZBin\\swi.blib",
-#else
   "0:\\ZBin\\swi.blib",
-#endif
   
   {CFG_CHECKBOX,"Realtime lib cache cleaner",0,2},
   1,

@@ -142,7 +142,7 @@ sub savePatchData {
 	
 	my $ret = $curl->perform;
 	my $http_code = $curl->getinfo(CURLINFO_HTTP_CODE);
-	die("savePatchData(".$fields->{id}."): error: ".($curl->errbuf ? $curl->errbuf : "HTTP: $http_code")) if $ret != 0 || $http_code != 302;
+	die("savePatchData(".$fields->{id}."): error: ".($curl->errbuf ? $curl->errbuf : "HTTP: $http_code")."\nbody: $response") if $ret != 0 || $http_code != 200;
 }
 
 sub getPatchData {

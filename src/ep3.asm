@@ -15,12 +15,13 @@
         DCD	sub_elfclose
         DCD	dlopen
         DCD	dlsym
-        DCD     dlclose
+        DCD dlclose
         DCD	setenv
         DCD	unsetenv
-        DCD     getenv
-        DCD     clearenv
+        DCD getenv
+        DCD clearenv
         DCD	environ
         DCD	dlerror
         DCD	dlclean_cache
         DCD	SHARED_TOP
+        DCD 0x030204
