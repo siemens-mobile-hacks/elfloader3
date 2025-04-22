@@ -1,22 +1,21 @@
-#include "loader3/loader.h"
-#include <inc/pnglist.h>
-#include <inc/png.h>
-#include <inc/swilib.h>
+#include "imgcache.h"
 #include "config_struct.h"
+#include "inc/pnglist.h"
+#include "loader3/loader.h"
 
-
+#define PIT_SIZE          20000 // меньше нельзя из-за старых эльфов
+#define PIT_BITMAP_SIZE   ((PIT_SIZE + 7) / 8 * 2)
 #define number 8
 
-const char Pointer[1]={0xFF};
-const IMGHDR empty_img = {0,0,0x1,(char *)Pointer};
 
-static __arm void LockSched_a() {
-  LockSched();
-}
+#define IMG_FILE_EXISTS (1 << 0)
+#define IMG_IS_DYNAMIC  (1 << 1)
 
-static __arm void UnlockSched_a() {
-  UnlockSched();
-}
+const char empty_img_data[] = { 0xFF };
+const IMGHDR empty_img = { 0, 0, 0x1, (char *) empty_img_data };
+PNGTOP_DESC pngtop = { 0 };
+
+__arm IMGHDR *PatchGetPIT(unsigned int pic);
 
 static void* xmalloc(int x,int n)
 {
@@ -319,8 +318,6 @@ __thumb IMGHDR* create_imghdr(const char *fname, int type)
   return (img_hc);
 }
 
-volatile PNGTOP_DESC pngtop = { 0 }; 
-
 #pragma inline
 static int tolower(int C)
 {
@@ -380,204 +377,313 @@ static unsigned int hash_strcpy(char *dst, const char* name)
     return hash;
 }
 
-
-/**
- * Я так и не понял как ОНО работает, какая-то наркоманская реализация. Хоть-бы коментировали %)
- * Поэтому просто добавил проверку по хешу.
- */
-
 #pragma optimize=no_inline
-static IMGHDR *find_png_in_cache(const char *png_name)
-{
-  PNGLIST *pl;
-  PNGLIST *pl_prev;
-  LockSched_a();
-  pl=(PNGLIST *)(&(pngtop.pltop));
-  pl_prev=NULL;
-  unsigned int hash = elfhash(png_name);
-  
-  while((pl = pl->next))
-  {
-    /* если хеш совпал, смотрим на имя */
-    if (pl->hash == hash && !__direct_strcmp(pl->pngname, png_name))
-    {
-      //Найден, переносим в начало и выходим
-      if (pl_prev)
-      {
-        //Только если не в самом начале
-        pl_prev->next = pl->next; //Удалили из найденого места
-        pl->next = (PNGLIST *)(pngtop.pltop); //Следующий - весь список
-        pngtop.pltop = pl; //А первый в списке - найденый
-      }
-      UnlockSched_a();
-      return(pl->img);
+// Парсим число из начала имени файла
+static int ImgCache_GetIdFromFile(const char *filename) {
+  int result = 0;
+  bool digits_found = false;
+  for (int i = 0; filename[i] != '\0'; i++) {
+    char c = filename[i];
+    if (c >= '0' && c <= '9') {
+      digits_found = true;
+      result = result * 10 + (c - '0');
+    } else {
+      if (c != '.')
+        return -1;
+      break;
     }
-    pl_prev = pl; //Текущий обработанный - теперь предыдущий
   }
-  UnlockSched_a();
-  return (0);
+
+  if (!digits_found)
+    return -1;
+
+  return result;
 }
 
-
-static IMGHDR *add_png_in_cache(const char *fname, IMGHDR *img)
-{
-  PNGLIST *cur = malloc(sizeof(PNGLIST)), *pl_prev; //Создаем элемент списка
-  cur->pngname = malloc(strlen(fname)+1);
-  
-  /* копируем имя и генерим хеш */
-  cur->hash = hash_strcpy(cur->pngname, fname);
-  
-  cur->img = img;
-  int i = 0; //Это количество элементов в списке
-  LockSched_a();
-  cur->next=(PNGLIST *)(pngtop.pltop); //Следующий - весь список
-  pngtop.pltop=cur; //Первый в списке - новый элемент
-  //Теперь подрезаем конец
-  PNGLIST *pl=(PNGLIST *)(&(pngtop.pltop));
-  do
-  {
-    pl_prev=pl;
-    pl=pl->next;
-    if (!pl)
-    {
-      //Закончились элементы раньше
-      UnlockSched_a();
-      return (cur->img);
-    }
-    i++;
-  }
-  while(i<= config->CACHE_PNG); //Пока количество элементов меньше допустимого
-  pl_prev->next=NULL; //Обрежем список
-  UnlockSched_a();
-  //Остальное можно сделать с разлоченной многозадачностью
-  do
-  {
-    //Удаляем текущий
-    if (pl->img)
-    { 
-      mfree(pl->img->bitmap);
-      mfree(pl->img);
-    }
-    mfree(pl->pngname);
-    pl_prev=pl;
-    pl=pl->next;
-    mfree(pl_prev);
-  }
-  while(pl); //Пока есть элементы, освобождаем их
-  return img;
+static unsigned char ImgCache_GetFlags(unsigned int index) {
+  unsigned int byte_index = index >> 2;
+  unsigned int shift = (index & 3) << 1;
+  return (pngtop.bitmap[byte_index] >> shift) & 3;
 }
 
+static void ImgCache_SetFlagsNoLock(unsigned int index, unsigned char bit, bool value) {
+  unsigned int byte_index = index >> 2;
+  unsigned int shift = (index & 3) << 1;
+  bit &= 3;
+  pngtop.bitmap[byte_index] &= ~(bit << shift);
+  if (value)
+    pngtop.bitmap[byte_index] |= bit << shift;
+}
 
+__arm static void ImgCache_SetFlags(unsigned int index, unsigned char bit, bool value) {
+    __direct_LockSched();
+    ImgCache_SetFlagsNoLock(index, bit, value);
+    __direct_UnlockSched();
+}
 
-__arm IMGHDR* PatchGetPIT(unsigned int pic)
-{
-  IMGHDR * img = 0;
-  unsigned int i;
-  char fname[256];
+__arm static void ImgCache_ScanFiles() {
+  DIR_ENTRY de;
+  unsigned int err;
+  char mask[256];
+  sprintf(mask, "%s*.png", config->IMAGES_PATH);
 
-  unsigned int mask80;
-  unsigned int mask40;
-  char *bp;
+  __direct_LockSched();
+  memset(pngtop.bitmap, 0, PIT_BITMAP_SIZE);
+  DYNPNGICONLIST *dynp = pngtop.dyn_pltop2;
+  while (dynp) {
+      ImgCache_SetFlagsNoLock(dynp->icon, IMG_IS_DYNAMIC, true);
+      dynp = dynp->next;
+  }
+  __direct_UnlockSched();
 
-  // Пока ELFPack ещё не запустился, всё, что мы можем, это загружать картинки по полному пути (без кэша)
+  if (FindFirstFile(&de, mask, &err)) {
+    do {
+      int pic = ImgCache_GetIdFromFile(de.file_name);
+      if (pic >= 0 && pic < PIT_SIZE)
+        ImgCache_SetFlags(pic, IMG_FILE_EXISTS, true);
+    } while(FindNextFile(&de, &err));
+  }
+  FindClose(&de, &err);
+}
+
+void ImgCache_Init(void) {
   if (!pngtop.bitmap) {
-    if ((pic >> 28) == 0xA) {
-      strcpy_tolow(fname, (char *) pic);
-      img = create_imghdr(fname, 0);
-      return img ? img : (IMGHDR *) &empty_img;
+    pngtop.bitmap = malloc(PIT_BITMAP_SIZE);
+    ImgCache_ScanFiles();
+  }
+}
+
+// Формируем путь по типу X:\ZBin\img\XXXX.png
+static void ImgCache_GetPathToIMG(char *buffer, unsigned int pic) {
+  print10(strcpy_tolow(buffer, config->IMAGES_PATH), pic);
+}
+
+static void ImgCache_Free(PNGLIST *item) {
+  if (item->img) {
+    mfree(item->img->bitmap);
+    mfree(item->img);
+  }
+  mfree(item->pngname);
+  mfree(item);
+}
+
+// Замена картинки в PIT по ID
+void PIT_SetImage(unsigned int pic, IMGHDR *img) {
+  DYNPNGICONLIST *new_item = malloc(sizeof(DYNPNGICONLIST));
+  new_item->icon = pic;
+  new_item->img = img;
+
+  PIT_ResetImage(pic);
+
+  __direct_LockSched();
+  new_item->next = pngtop.dyn_pltop2;
+  pngtop.dyn_pltop2 = new_item;
+  __direct_UnlockSched();
+
+  ImgCache_SetFlags(pic, IMG_IS_DYNAMIC, true);
+}
+
+// Вернуть стандартную картинку
+void PIT_ResetImage(unsigned int pic) {
+  __direct_LockSched();
+  DYNPNGICONLIST *cursor = pngtop.dyn_pltop2;
+  DYNPNGICONLIST *prev = NULL;
+  while (cursor) {
+    if (cursor->icon == pic) {
+      if (prev) {
+        prev->next = cursor->next;
+      } else {
+        pngtop.dyn_pltop2 = cursor->next;
+      }
+      mfree(cursor);
+      __direct_UnlockSched();
+
+      ImgCache_SetFlags(pic, IMG_IS_DYNAMIC, false);
+      return;
     }
+    prev = cursor;
+    cursor = cursor->next;
+  }
+  __direct_UnlockSched();
+}
+
+// Очистить весь кэш
+void PIT_ClearCache() {
+  __direct_LockSched();
+  PNGLIST *cursor = pngtop.pltop;
+  pngtop.pltop = NULL;
+
+  while (cursor) {
+    PNGLIST *next = cursor->next;
+    ImgCache_Free(cursor);
+    cursor = next;
+  }
+  __direct_UnlockSched();
+
+  ImgCache_ScanFiles();
+}
+
+// Медленный поиск по имени файла
+static IMGHDR *ImgCache_FindByName(const char *fname) {
+  __direct_LockSched();
+  PNGLIST *cursor = pngtop.pltop;
+  PNGLIST *prev = NULL;
+  unsigned int hash = elfhash(fname);
+  while (cursor) {
+    if (cursor->hash == hash && __direct_strcmp(cursor->pngname, fname) == 0) {
+      if (prev) {
+        // Переносим элемент в начало списка
+        prev->next = cursor->next;
+        cursor->next = pngtop.pltop;
+        pngtop.pltop = cursor;
+      }
+      __direct_UnlockSched();
+      return cursor->img;
+    }
+    prev = cursor;
+    cursor = cursor->next;
+  }
+  __direct_UnlockSched();
+  return NULL;
+}
+
+// Быстрый поиск по ID (для PIT)
+static IMGHDR *ImgCache_FindById(int icon) {
+  __direct_LockSched();
+  PNGLIST *cursor = pngtop.pltop;
+  PNGLIST *prev = NULL;
+  while (cursor) {
+    if (cursor->icon == icon) {
+      if (prev) {
+        // Переносим элемент в начало списка
+        prev->next = cursor->next;
+        cursor->next = pngtop.pltop;
+        pngtop.pltop = cursor;
+      }
+      __direct_UnlockSched();
+      return cursor->img;
+    }
+    prev = cursor;
+    cursor = cursor->next;
+  }
+  __direct_UnlockSched();
+  return NULL;
+}
+
+// Поиск среди динамических изображений
+static IMGHDR *ImgCache_FindDynImage(DYNPNGICONLIST *dynp, unsigned int pic) {
+  while (dynp) {
+    if (dynp->icon == pic) {
+      IMGHDR *img = dynp->img;
+      if (img)
+        return img;
+    }
+    dynp = dynp->next;
+  }
+  return NULL;
+}
+
+static void ImgCache_Add(const char *fname, IMGHDR *img, int icon) {
+  if (!pngtop.bitmap)
+    return;
+
+  // Новый элемент в кэше
+  PNGLIST *new_item = malloc(sizeof(PNGLIST));
+  new_item->pngname = malloc(strlen(fname) + 1);
+  new_item->hash = hash_strcpy(new_item->pngname, fname);
+  new_item->img = img;
+  new_item->icon = icon;
+
+  __direct_LockSched();
+
+  // Добавляем в начало
+  new_item->next = pngtop.pltop;
+  pngtop.pltop = new_item;
+
+  // Теперь подрезаем конец
+  PNGLIST *cursor = pngtop.pltop;
+  int count = 0;
+  while (cursor) {
+    count++;
+    if (count >= config->CACHE_PNG)
+      break;
+    cursor = cursor->next;
+  }
+
+  if (!cursor) {
+    // Пока ещё есть свободные элементы в списке
+    __direct_UnlockSched();
+    return;
+  }
+
+  // Обрезаем список, чтобы соблюдать заданный лимит
+  PNGLIST *delete_cursor = cursor->next;
+  cursor->next = NULL;
+  __direct_UnlockSched();
+
+  // Удаляем все лишние элементы
+  while (delete_cursor) {
+    PNGLIST *next = delete_cursor->next;
+    ImgCache_Free(delete_cursor);
+    delete_cursor = next;
+  }
+}
+
+__arm IMGHDR *PatchGetPIT(unsigned int pic) {
+  char fname[256];
+  IMGHDR *img;
+
+  // Передали строку в которой путь до картинки
+  if ((pic >> 28) == 0xA) {
+    strcpy_tolow(fname, (char *) pic);
+    img = ImgCache_FindByName(fname);
+    if (img)
+      return img;
+    img = create_imghdr(fname, 0);
+    if (!img)
+      return (IMGHDR *) &empty_img;
+    ImgCache_Add(fname, img, -1);
+    return img;
+  }
+
+  if (!pngtop.bitmap || pic >= PIT_SIZE)
+    return NULL;
+
+  unsigned char flags = ImgCache_GetFlags(pic);
+
+  // Динамические картинки
+  if (pngtop.dyn_pltop || (pngtop.dyn_pltop2 && (flags & IMG_IS_DYNAMIC))) {
+    __direct_LockSched();
+    img = ImgCache_FindDynImage(pngtop.dyn_pltop, pic);
+    if (img) {
+      __direct_UnlockSched();
+      return img;
+    }
+    img = ImgCache_FindDynImage(pngtop.dyn_pltop2, pic);
+    if (img) {
+      __direct_UnlockSched();
+      return img;
+    }
+    __direct_UnlockSched();
+  }
+
+  if (!(flags & IMG_FILE_EXISTS))
+    return NULL;
+
+  img = ImgCache_FindById(pic);
+  if (img)
+    return img;
+
+  ImgCache_GetPathToIMG(fname, pic);
+
+  img = create_imghdr(fname, 0);
+  if (!img) {
+    ImgCache_SetFlags(pic, IMG_FILE_EXISTS, false);
     return NULL;
   }
 
-  if ((pic>>28)==0xA)
-  {
-    strcpy_tolow(fname, (char*)pic);
-    img = find_png_in_cache(fname);
-    if (img) return (img);
-    img=create_imghdr(fname,0);
-    if (!img) return ((IMGHDR *)&empty_img);
-  }
-  else
-  {
-    //Ищем в списке динамических иконок
-    {
-      DYNPNGICONLIST *dynp;
-      LockSched();
-      dynp=pngtop.dyn_pltop;
-      while(dynp)
-      {
-        if (dynp->icon==pic)
-        {
-          IMGHDR *i=dynp->img;
-          if (i)
-          {
-            UnlockSched();
-            return(i);
-          }       
-        }
-        dynp=dynp->next;
-      }
-      UnlockSched();
-    }
-    if ((pic<20000))
-    {
-      mask40=(mask80=0x80UL>>((pic&3)<<1))>>1;
-      bp=pngtop.bitmap+(pic>>2);
-      if ((i=*bp)&mask80)  // Есть запись в битмапе
-      {
-        if (i&mask40)  
-        {
-          char *next=strcpy_tolow(fname, config->IMAGES_PATH); // Картинка вроде как есть на диске
-          //*fname=DEFAULT_DISK_N+'0';
-          print10(next,pic);
-          img=find_png_in_cache(fname);
-          if (img) return (img);
-          img=create_imghdr(fname,0);          
-        } 
-        else return(0);                                // Картинки нет - выходим
-      }
-      else 
-      {
-        LockSched();
-        *bp|=mask80; // Записи нет, ставим флаг что есть
-        UnlockSched();
-        char *next=strcpy_tolow(fname, config->IMAGES_PATH);
-        //*fname=DEFAULT_DISK_N+'0';
-        print10(next,pic);
-        img=find_png_in_cache(fname);
-        if (img)
-        {
-          LockSched();
-          *bp|=mask40;
-          UnlockSched();
-          return (img);
-        }
-        img=create_imghdr(fname,0);                 // Пробуем создать
-        if (img)
-        {
-          LockSched();
-          *bp|=mask40;
-          UnlockSched();
-        }
-        else  return (0);
-      }
-    }
-    else return(0);
-  }
-  //Ничего не нашли, теперь пробуем добавить
-  
-  //if (!img) return (0); //Нечего добавлять
-
-  return add_png_in_cache(fname, img);
-}
-
-void InitPngBitMap(void)
-{
-  if (!pngtop.bitmap)
-  {
-    pngtop.bitmap=malloc(20000/8*2);
-  }
-  memset((void*)(pngtop.bitmap), 0,20000/8*2);
+  ImgCache_Add(fname, img, pic);
+  return img;
 }
 
 #pragma diag_suppress=Pe177

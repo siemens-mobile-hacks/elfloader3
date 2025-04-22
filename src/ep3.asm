@@ -11,6 +11,9 @@
         EXTERN  dlclean_cache
         EXTERN  SHARED_TOP
         EXTERN	sub_elfclose
+        EXTERN  PIT_ClearCache
+        EXTERN  PIT_SetImage
+        EXTERN  PIT_ResetImage
         
         DCD	sub_elfclose
         DCD	dlopen
@@ -24,4 +27,7 @@
         DCD	dlerror
         DCD	dlclean_cache
         DCD	SHARED_TOP
-        DCD 0x030204
+        DCD 0x030300
+        DCD PIT_ClearCache
+        DCD PIT_SetImage
+        DCD PIT_ResetImage

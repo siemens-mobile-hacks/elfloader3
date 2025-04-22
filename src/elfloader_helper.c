@@ -1,8 +1,9 @@
-#include <inc\swilib.h>
+#include <inc/swilib.h>
 #include <stdbool.h>
+#include "imgcache.h"
 #include "conf_loader.h"
-#include "loader3\loader.h"
-#include "loader3\env.h"
+#include "loader3/loader.h"
+#include "loader3/env.h"
 #include "config_struct.h"
 
 int dlclean_cache();
@@ -281,8 +282,6 @@ static bool LoadDynSwilibFromFile(void)
   return true;
 }
 
-extern void InitPngBitMap(void);
-
 char smallicons_str[32] = { 0 };
 char bigicons_str[32] = { 0 };
 
@@ -346,7 +345,7 @@ __thumb void InitLoader(void *data)
   }
 
   InitLoaderSystem();
-  InitPngBitMap();
+  ImgCache_Init();
   //strcpy(smallicons_str+1,":\\ZBin\\img\\elf_small.png");
   //strcpy(bigicons_str+1,":\\ZBin\\img\\elf_big.png");
   //smallicons_str[0]=bigicons_str[0]=DEFAULT_DISK_N+'0';

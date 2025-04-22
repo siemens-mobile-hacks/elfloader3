@@ -1,4 +1,10 @@
 # Changelog
+## 2025.04.22 - [@Azq2](https://github.com/Azq2)
+1. Значительно оптимизирован код для замены иконок в PIT через X:\ZBin\img
+2. Новые функции:
+    - 2FB: PIT_ClearCache
+    - 2FC: PIT_SetImage
+    - 2FD: PIT_ResetImage
 ## 2024.11.14 - [@Azq2](https://github.com/Azq2)
 1. Теперь можно увеличить размер png-cache до 512 элементов (было 200).
 2. Реализована возможность размещать папку ZBin на дисках Cache и Config. Выбор диска работает по такой логике:

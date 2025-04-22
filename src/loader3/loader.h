@@ -131,6 +131,8 @@ extern const uint32_t *pLIB_TOP;        /* blib */
 extern const uint32_t Library[];        /* library.vkp */
 
 #define __direct_strcmp(...) ((int (*)(char const *, char const *)) Library[0x0085])(__VA_ARGS__)
+#define __direct_LockSched(...) ((int (*)()) Library[0x0146])(__VA_ARGS__)
+#define __direct_UnlockSched(...) ((int (*)()) Library[0x0147])(__VA_ARGS__)
 
 extern int __e_div(int delitelb, int delimoe);
 extern int get_file_size(const char *fl);

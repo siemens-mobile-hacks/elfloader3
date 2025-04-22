@@ -1,27 +1,32 @@
 #ifndef _PNG_LIST_H_
 #define _PNG_LIST_H_
 
-typedef struct
+typedef struct PNGLIST PNGLIST;
+typedef struct DYNPNGICONLIST DYNPNGICONLIST;
+typedef struct PNGTOP_DESC PNGTOP_DESC;
+
+struct PNGLIST
 {
-  void *next;
+  PNGLIST *next;
   char *pngname;
-  IMGHDR * img;
+  IMGHDR *img;
   unsigned int hash;
-}PNGLIST;
-
-typedef struct
-{
-  void *next;
   int icon;
-  IMGHDR * img;
-}DYNPNGICONLIST;
+};
 
-typedef struct
+struct DYNPNGICONLIST
 {
-  PNGLIST * pltop;
+  DYNPNGICONLIST *next;
+  int icon;
+  IMGHDR *img;
+};
+
+struct PNGTOP_DESC {
+  PNGLIST *pltop;
   char *bitmap;
   DYNPNGICONLIST *dyn_pltop;
-}PNGTOP_DESC;  
+  DYNPNGICONLIST *dyn_pltop2;
+};
 
 #define PNG_8 1
 #define PNG_16 2

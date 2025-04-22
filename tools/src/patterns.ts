@@ -16,17 +16,31 @@ export const SOCKETS_ERROR_EBSD_CHECK_V2 = `[........] 98 00 28 [........] d1 LD
 
 export const NU_SLEEP_FUNC_NSG = `000050E3E0109F150010911500005113`;
 
-
-/*
-
-; Fix USB Vendor ID
-0D25A8C: F5110000 7B060000
-
-; Fix USB Product ID (when "2nd COM" is on)
-0D25A90: 04100000 03230000
-
-; Fix USB Product ID (when "2nd COM" is off)
-0D259FC: 00 03
-0D25952: 00 03
-
-*/
+export const SWILIB: Record<string, number> = {
+    SK65sw50: 0xA0FD4000,
+    CF75sw23: 0xA10E4000,
+    S65sw58: 0xA0FD4000,
+    S68sw52: 0xA0074000,
+    S75sw47: 0xA0074000,
+    C72sw22: 0xA0FD4000,
+    S75sw52: 0xA0074000,
+    C81sw51: 0xA0074000,
+    C75sw22: 0xA10E4000,
+    S68sw47: 0xA0074000,
+    C75sw24: 0xA10E4000,
+    M75sw25: 0xA0FD4000,
+    CL61sw00: 0xA1320000,
+    EL71sw41: 0xA0074000,
+    EL71sw45: 0xA0074000,
+    S75sw40: 0xA0074000,
+    CL61sw00_db128: 0xA1320000,
+    CX70sw56: 0xA0FD4000,
+    SL75sw47: 0xA0074000,
+    SL65sw53: 0xA0FD4000,
+    E71sw45: 0xA0074000,
+    CX75sw25: 0xA0FD4000,
+    M81sw51: 0xA0074000,
+    CX75sw13: 0xA0FD4000,
+    CX75sw12: 0xA0FD4000,
+    SL75sw52: 0xA0074000,
+};

@@ -1,3 +1,4 @@
+.idea
 ff/*.bin
 tools/node_modules/
 *.diff
