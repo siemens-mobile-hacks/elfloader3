@@ -1,7 +1,7 @@
 # Changelog
 ## 2025.04.22 - [@Azq2](https://github.com/Azq2)
 1. Значительно оптимизирован код для замены иконок в PIT через X:\ZBin\img
-2. Новые функции:
+2. Добавлен механизм для динамической замены картинок в PIT из эльфов. Новые функции:
     - 2FB: PIT_ClearCache
     - 2FC: PIT_SetImage
     - 2FD: PIT_ResetImage

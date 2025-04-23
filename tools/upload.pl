@@ -6,9 +6,12 @@ use File::Basename;
 use File::Slurp qw(read_file);
 use HTML5::DOM;
 use Getopt::Long;
-use WWW::Curl::Easy;
-use WWW::Curl::Form;
+use LWP::UserAgent;
+use HTTP::Request::Common;
+use HTTP::Cookies;
 use Data::Dumper;
+use URI;
+use URI::Escape;
 
 my $KIBAB_LOGIN;
 my $KIBAB_PASSWORD;
@@ -31,26 +34,26 @@ for my $line (split(/(\r\n|\n)/, scalar(read_file(dirname(__FILE__)."/patches.tx
 for my $model (sort keys %$model2patch) {
 	my $file = dirname(__FILE__)."/../release/ElfPack_$model.vkp";
 	next if !-f $file;
-	
+
 	my $old_patch = $model2patch->{$model};
-	
+
 	my ($patch_id) = $old_patch =~ /id=(\d+)/;
 	die "Invalid patch URL: $old_patch" if !$patch_id;
-	
+
 	# next if $patch_id != 10732;
-	
+
 	print "[$model]\n";
 	print "ELFLoader: $file\n";
 	print "Old patch: $old_patch\n";
-	
+
 	my $patch_data = scalar(read_file($file));
-	
+
 	my ($version) = $patch_data =~ /Version: (.*?)$/im;
 	my ($date) = $patch_data =~ /Date: (.*?)$/im;
 	print "Version: $version ($date)\n";
-	
+
 	die "Invalid patch\n$patch_data" if !$date || !$version;
-	
+
 	my $description = join("\n",
 		"[b]${date} - v${version}[/b]",
 		"Список изменений и исходники: [url]https://github.com/siemens-mobile-hacks/elfloader3/blob/master/README.md[/url]",
@@ -63,15 +66,15 @@ for my $model (sort keys %$model2patch) {
 		"SDK for developers: [url]https://github.com/siemens-mobile-hacks/sdk[/url]",
 		"[b][color:darkgreen]Bugtracker:[/color][/b] [url]https://github.com/siemens-mobile-hacks/elfloader3/issues[/url]",
 	);
-	
+
 	my $old_fields = getPatchData($patch_id);
 	my $fields = { %$old_fields };
-	
+
 	$patch_data =~ s/\r\n|\n/\r\n/g;
 	$patch_data =~ s/^;.*?\r\n\r\n//gsi;
 	$patch_data =~ s/^\s+|\s+$//g;
 	$patch_data .= "\r\n";
-	
+
 	$fields->{is_beta} = 1;
 	$fields->{p_ver} = $version;
 	$fields->{p_name_RU} = "ElfPack [$date]";
@@ -80,7 +83,7 @@ for my $model (sort keys %$model2patch) {
 	$fields->{p_dname} = "ElfPack-${date}-v${version}";
 	$fields->{p_dname} =~ s/[.]/_/g;
 	$fields->{p_text} = $patch_data;
-	
+
 	if (checkUpdateData($old_fields, $fields)) {
 		print "Updating patch...\n";
 		savePatchData($fields);
@@ -89,87 +92,91 @@ for my $model (sort keys %$model2patch) {
 
 sub cmpTextStr {
 	my ($a, $b) = @_;
-	
+
 	$a = "$a";
 	$b = "$b";
-	
+
 	$a =~ s/\r\n|\n/\r\n/g;
 	$a =~ s/^\s+|\s+$//g;
-	
+
 	$b =~ s/\r\n|\n/\r\n/g;
 	$b =~ s/^\s+|\s+$//g;
-	
+
 	return $a eq $b;
 }
 
 sub checkUpdateData {
 	my ($old, $new) = @_;
-	
+
 	for my $k (keys %$new) {
 		return $k if !exists $old->{$k};
 		return $k if !cmpTextStr($old->{$k}, $new->{$k});
 	}
-	
+
 	for my $k (keys %$old) {
 		return $k if !exists $new->{$k};
 		return $k if !cmpTextStr($old->{$k}, $new->{$k});
 	}
-	
+
 	return 0;
 }
 
 sub savePatchData {
 	my ($fields) = @_;
-	
-	my $response;
-	my $curl = WWW::Curl::Easy->new;
-	$curl->setopt(CURLOPT_WRITEDATA, \$response);
-	$curl->setopt(CURLOPT_COOKIE, "login=$KIBAB_LOGIN; password=$KIBAB_PASSWORD");
-	$curl->setopt(CURLOPT_URL, 'https://patches.kibab.com/patches/addpatch.php5');
-	
-	my $form = WWW::Curl::Form->new;
+
+	my $ua = LWP::UserAgent->new;
+	$ua->cookie_jar(HTTP::Cookies->new);
+
+	my %form_data;
 	for my $k (keys %$fields) {
 		die "Undefined key $k" if !defined $fields->{$k};
-		
+
 		my $v = $fields->{$k};
 		Encode::from_to($v, "utf-8", "cp1251");
 		$v =~ s/(\r\n|\n)/\r\n/g;
-		
-		$form->formadd($k, $v);
+		$form_data{$k} = $v;
 	}
-	$curl->setopt(CURLOPT_POST, 1);
-	$curl->setopt(CURLOPT_HTTPPOST, $form);
-	
-	my $ret = $curl->perform;
-	my $http_code = $curl->getinfo(CURLINFO_HTTP_CODE);
-	die("savePatchData(".$fields->{id}."): error: ".($curl->errbuf ? $curl->errbuf : "HTTP: $http_code")."\nbody: $response") if $ret != 0 || $http_code != 200;
+
+	# Формируем тело вручную, чтобы избежать перекодировки
+	my $body = join '&', map { uri_escape($_) . '=' . uri_escape($form_data{$_}) } keys %form_data;
+
+	my $req = HTTP::Request->new(POST => 'https://patches.kibab.com/patches/addpatch.php5');
+	$req->header('Content-Type' => 'application/x-www-form-urlencoded; charset=windows-1251');
+	$req->header('Cookie' => "login=$KIBAB_LOGIN; password=$KIBAB_PASSWORD");
+	$req->content($body);
+
+	my $response = $ua->request($req);
+
+	my $code = $response->code;
+	die("savePatchData(".$fields->{id}."): error: ".$response->status_line."\nbody: ".$response->decoded_content)
+		if $code != 200 && $code != 302;
 }
 
 sub getPatchData {
 	my ($id) = @_;
-	
-	my $response;
-	my $curl = WWW::Curl::Easy->new;
-	$curl->setopt(CURLOPT_WRITEDATA, \$response);
-	$curl->setopt(CURLOPT_COOKIE, "login=$KIBAB_LOGIN; password=$KIBAB_PASSWORD");
-	$curl->setopt(CURLOPT_URL, 'https://patches.kibab.com/patches/addpatch.php5?id='.$id.'&action=edit_patch');
-	
-	my $ret = $curl->perform;
-	my $http_code = $curl->getinfo(CURLINFO_HTTP_CODE);
-	die("getPatchData(".$id."): error: ".($curl->errbuf ? $curl->errbuf : "HTTP: $http_code")) if $ret != 0 || $http_code != 200;
-	
-	my $doc = HTML5::DOM->new->parse($response);
+
+	my $ua = LWP::UserAgent->new;
+	$ua->cookie_jar({});
+
+	my $response = $ua->get(
+		'https://patches.kibab.com/patches/addpatch.php5?id='.$id.'&action=edit_patch',
+		Cookie => "login=$KIBAB_LOGIN; password=$KIBAB_PASSWORD"
+	);
+
+	die("getPatchData($id): error: ".$response->status_line) unless $response->is_success;
+
+	my $doc = HTML5::DOM->new->parse($response->decoded_content);
 	my $form = $doc->at('#PatchAddForm');
 	die "getPatchData($id): form not found!" if !$form;
-	
+
 	my $fields = {};
 	for my $input (@{$form->find('textarea, input, select')}) {
 		my $type = $input->attr("type") // "unknown";
 		next if $type eq "button" or $type eq "submit" or $type eq "file";
 		next if !defined $input->attr("name");
-		
+
 		die "Duplicate: ".$input->attr("name") if exists $fields->{$input->attr("name")};
-		
+
 		if ($input->nodeName eq "SELECT") {
 			$fields->{$input->attr("name")} = $input->at('[selected]')->attr("value");
 		} elsif ($type eq "hidden" || $type eq "text") {
