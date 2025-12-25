@@ -3,63 +3,23 @@
 #include "conf_loader.h"
 #include "config_struct.h"
 
+static int default_config_disk = 0;
 config_structure_t *config = NULL;
-const char *successed_config_filename = NULL;
 
 // Обновляем диск у всех путей, чтобы юзеру не приходилось делать это вручную
-static inline void SyncDefaultDisk(config_structure_t *config, char disk) {
+static inline void _SyncDefaultDisk(config_structure_t *config, char disk) {
   config->IMAGES_PATH[0] = disk;
   config->DAEMONS_PATH[0] = disk;
   config->SWIBLIB_PATH[0] = disk;
   config->ELFLOADER_LOG_PATH[0] = disk;
 }
 
-static int LoadConfigData(const char *fname)
-{
-  int f;
-  unsigned int ul;
-  int result=0;
-  void *cfg;
-  void *cfg_init;
-  unsigned int rlen, end;
-  
-  cfg=(void *)config;
-  cfg_init = (void *)&config_structure;
-  
-  unsigned int len = sizeof(config_structure);
-  if ((f=fopen(fname,A_ReadOnly+A_BIN,P_READ,&ul))!=-1)
-  {
-    rlen=fread(f, cfg, len, &ul);
-    end=lseek(f,0,S_END,&ul,&ul);
-    fclose(f,&ul);
-    if (rlen!=end || rlen!=len)  goto L_SAVENEWCFG;
-  }
-  else
-  {
-  L_SAVENEWCFG:
-    memcpy_a(cfg, cfg_init, len);
-    SyncDefaultDisk(config, fname[0]);
-    if ((f=fopen(fname,A_ReadWrite+A_Create+A_Truncate,P_READ+P_WRITE,&ul))!=-1)
-    {
-      if (fwrite(f,cfg,len,&ul)!=len) result=-1;
-      fclose(f,&ul);
-    }
-    else
-      result=-1;
-  }
-  if (result>=0)
-  {
-    successed_config_filename=fname;
-  }
-  return(result);
-}
-
-static char FindPath(char *path) {
-#ifdef NEWSGOLD
+static char _FindDiskForPath(char *path) {
+    #ifdef NEWSGOLD
     const char disks[] = { '4', '0', '2', '1' };
-#else
+    #else
     const char disks[] = { '4', '0', 'b', 'a' };
-#endif
+    #endif
     FSTATS fs;
     unsigned int err;
 
@@ -72,6 +32,69 @@ static char FindPath(char *path) {
     return 0;
 }
 
+static int _GetDefaultDisk() {
+    if (!default_config_disk) {
+        char config_path[] = "?:\\ZBin\\etc\\ElfPack.bcfg";
+        int disk = _FindDiskForPath(config_path);
+        if (!disk) {
+            char zbin_etc_path[] = "?:\\ZBin\\etc";
+            disk = _FindDiskForPath(zbin_etc_path);
+            if (!disk) {
+                char zbin_path[] = "?:\\ZBin";
+                disk = _FindDiskForPath(zbin_path);
+            }
+        }
+        default_config_disk = disk ? disk : '0';
+    }
+    return default_config_disk;
+}
+
+static char *_FindConfigFile(const char *config_file_mask) {
+    if (config_file_mask[0] != '?')
+        return NULL;
+    unsigned int len = strlen(config_file_mask);
+    char *config_file = malloc(len + 1);
+    memcpy_a(config_file, config_file_mask, len + 1);
+    config_file[0] = _GetDefaultDisk();
+    return config_file;
+}
+
+int BCFG_SaveConfig(const char *config_file_mask, void *cfg, uint32_t cfg_size) {
+    char *found_config_file = _FindConfigFile(config_file_mask);
+    unsigned int err;
+    int fd = fopen(found_config_file ? found_config_file : config_file_mask, A_ReadWrite + A_Create + A_Truncate, P_READ + P_WRITE, &err);
+    if (found_config_file)
+        mfree(found_config_file);
+
+    int result = -1;
+    if (fd >= 0) {
+        if (fwrite(fd, cfg, cfg_size, &err) == cfg_size)
+            result = 0;
+        fclose(fd, &err);
+    }
+    return result;
+}
+
+int BCFG_LoadConfig(const char *config_file_mask, void *cfg, uint32_t cfg_size) {
+    char *found_config_file = _FindConfigFile(config_file_mask);
+    unsigned int err;
+    int fd = fopen(found_config_file ? found_config_file : config_file_mask, A_ReadOnly + A_BIN, P_READ, &err);
+    if (found_config_file)
+        mfree(found_config_file);
+
+    int result = -1;
+    if (fd >= 0) {
+        int file_size = lseek(fd, 0, S_END, &err, &err);
+        if (file_size == cfg_size) {
+            lseek(fd, 0, S_SET, &err, &err);
+            if (fread(fd, cfg, cfg_size, &err) == cfg_size)
+                result = 0;
+        }
+        fclose(fd, &err);
+    }
+    return result;
+}
+
 void InitConfig() {
 #ifdef USE_STATIC_MEMORY
     // Если памяти завались, юзаем статическую аллокацию
@@ -82,17 +105,10 @@ void InitConfig() {
     config = malloc(sizeof(config_structure_t));
 #endif
 
-    char config_path[] = "?:\\ZBin\\etc\\ElfPack.bcfg";
-    int disk = FindPath(config_path);
-    if (!disk) {
-        char zbin_etc_path[] = "?:\\ZBin\\etc";
-        disk = FindPath(zbin_etc_path);
-        if (!disk) {
-            char zbin_path[] = "?:\\ZBin";
-            disk = FindPath(zbin_path);
-        }
+    const char config_path[] = "?:\\ZBin\\etc\\ElfPack.bcfg";
+    if (BCFG_LoadConfig(config_path, config, sizeof(config_structure_t)) != 0) {
+        memcpy_a(config, &config_structure, sizeof(config_structure));
+        _SyncDefaultDisk(config, _GetDefaultDisk());
+        BCFG_SaveConfig(config_path, config, sizeof(config_structure_t));
     }
-
-    config_path[0] = disk ? disk : '0';
-    LoadConfigData(config_path);
 }

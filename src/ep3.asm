@@ -14,6 +14,8 @@
         EXTERN  PIT_ClearCache
         EXTERN  PIT_SetImage
         EXTERN  PIT_ResetImage
+        EXTERN  BCFG_LoadConfig
+        EXTERN  BCFG_SaveConfig
         
         DCD	sub_elfclose
         DCD	dlopen
@@ -27,7 +29,9 @@
         DCD	dlerror
         DCD	dlclean_cache
         DCD	SHARED_TOP
-        DCD 0x030300
+        DCD 0x030301
         DCD PIT_ClearCache
         DCD PIT_SetImage
         DCD PIT_ResetImage
+        DCD BCFG_LoadConfig
+        DCD BCFG_SaveConfig

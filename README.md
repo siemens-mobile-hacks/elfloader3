@@ -1,4 +1,9 @@
 # Changelog
+## 2025.12.25 - [@Azq2](https://github.com/Azq2)
+1. Новые функции:
+    - 2FE: BCFG_LoadConfig
+    - 2FF: BCFG_SaveConfig
+
 ## 2025.04.22 - [@Azq2](https://github.com/Azq2)
 1. Значительно оптимизирован код для замены иконок в PIT через X:\ZBin\img
 2. Добавлен механизм для динамической замены картинок в PIT из эльфов. Новые функции:
