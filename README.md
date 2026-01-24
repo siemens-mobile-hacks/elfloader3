@@ -1,4 +1,8 @@
 # Changelog
+## 2026.01.24 - [@Azq2](https://github.com/Azq2)
+1. Новые функции:
+    - 400: BCFG_GetDefaultDisk
+
 ## 2025.12.25 - [@Azq2](https://github.com/Azq2)
 1. Новые функции:
     - 2FE: BCFG_LoadConfig

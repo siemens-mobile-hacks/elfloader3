@@ -35,3 +35,8 @@
         DCD PIT_ResetImage
         DCD BCFG_LoadConfig
         DCD BCFG_SaveConfig
+
+        RSEG	SWILIB_FUNC400:CODE
+        EXTERN  BCFG_GetDefaultDisk
+
+        DCD BCFG_GetDefaultDisk

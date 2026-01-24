@@ -125,6 +125,7 @@ function swilibAddr(model: string, config: ELFPackConfig) {
 		"SWILIB_FUNC1B8_1BB": [0x1B8, 4],
 		"SWILIB_FUNC1E9": [0x1E9, 1],
 		"SWILIB_FUNC2EE": [0x2EE, 18],
+		"SWILIB_FUNC400": [0x400, 32],
 	};
 
 	for (const name in functions) {
