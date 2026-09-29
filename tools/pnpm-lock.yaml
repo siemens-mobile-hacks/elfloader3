@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@sie-js/ptr89':
+        specifier: ^3.0.3
+        version: 3.0.3
       glob:
         specifier: ^10.4.2
         version: 10.4.2
@@ -187,6 +190,9 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
+
+  '@sie-js/ptr89@3.0.3':
+    resolution: {integrity: sha512-h/A0bE2QSCPbJK15N88VcghsiqJI7hnS4HBzogq2psE43YfkhR4Gt8dszn5gbxUxNAi+hTUv9lM6tjKCj8Lzcg==}
 
   '@types/node@22.14.1':
     resolution: {integrity: sha512-u0HuPQwe/dHrItgHHpmw3N2fYCR6x4ivMNbPHRkBVP4CvN+kiRrKHWk3i8tXiO/joPwXLMYvF9TTF0eqgHIuOw==}
@@ -440,6 +446,8 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
+
+  '@sie-js/ptr89@3.0.3': {}
 
   '@types/node@22.14.1':
     dependencies:

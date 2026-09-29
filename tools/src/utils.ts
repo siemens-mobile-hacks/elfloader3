@@ -1,37 +1,30 @@
-import child_process from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
+import { Ptr89 } from "@sie-js/ptr89";
 
 export const ROOT_DIR = path.resolve(`${import.meta.dirname}/../../`);
 
-export type Ptr89PatternResult = {
-	offset: number;
-	value: number;
-};
+const ptr89 = new Ptr89();
+let openedModel: string | undefined;
 
-export type Ptr89Pattern = {
-	results: Ptr89PatternResult[]
-};
+async function openModel(model: string) {
+	if (openedModel === model)
+		return;
 
-export type Ptr89 = {
-	patterns: Ptr89Pattern[];
-};
-
-export function findPattern(model: string, pattern: string) {
-	const { stdout } = child_process.spawnSync(`ptr89`, [
-		'-f', `${ROOT_DIR}/ff/${model}.bin`,
-		'-p', pattern,
-		'-J',
-	], {});
-	return (JSON.parse(stdout.toString()) as Ptr89).patterns[0].results[0];
+	ptr89.close();
+	openedModel = undefined;
+	await ptr89.open(fs.readFileSync(`${ROOT_DIR}/ff/${model}.bin`));
+	openedModel = model;
 }
 
-export function findPatternAll(model: string, pattern: string) {
-	const { stdout } = child_process.spawnSync(`ptr89`, [
-		'-f', `${ROOT_DIR}/ff/${model}.bin`,
-		'-p', pattern,
-		'-J',
-	], {});
-	return (JSON.parse(stdout.toString()) as Ptr89).patterns[0].results;
+export async function findPattern(model: string, pattern: string) {
+	await openModel(model);
+	return ptr89.find(pattern, 1).results[0];
+}
+
+export async function findPatternAll(model: string, pattern: string) {
+	await openModel(model);
+	return ptr89.find(pattern).results;
 }
 
 export function ucfirst(string: string) {

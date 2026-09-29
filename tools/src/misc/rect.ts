@@ -20,9 +20,9 @@ for (const file of globSync(`${ROOT_DIR}/ff/*.bin`)) {
     for (const name in ptrs) {
         const ptr = ptrs[name];
 
-        const found = findPattern(model, ptr);
+        const found = await findPattern(model, ptr);
         if (found) {
-            const rect = fs.readFileSync(file).subarray(found.value - 0xA0000000, found.value - 0xA0000000 + 8);
+            const rect = fs.readFileSync(file).subarray(found.address - 0xA0000000, found.address - 0xA0000000 + 8);
 
             const x1 = rect.readUInt16LE(0);
             const y1 = rect.readUInt16LE(2);
@@ -34,7 +34,7 @@ for (const file of globSync(`${ROOT_DIR}/ff/*.bin`)) {
             stat[name][key] = stat[name][key] || [];
             stat[name][key].push(model);
 
-            console.log(name, sprintf("0x%08X", found.value), [x1, y1, x2, y2]);
+            console.log(name, sprintf("0x%08X", found.address), [x1, y1, x2, y2]);
         }
     }
 

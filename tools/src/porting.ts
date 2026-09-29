@@ -13,10 +13,10 @@ type ELFPackConfig = {
 
 for (const file of globSync(`${ROOT_DIR}/ff/*.bin`)) {
 	const model = path.basename(file).replace(/\.bin$/, '');
-	genPatches(model);
+	await genPatches(model);
 }
 
-function genPatches(model: string) {
+async function genPatches(model: string) {
 	const config: ELFPackConfig = {
 		xcl: {},
 		functions: {},
@@ -24,10 +24,11 @@ function genPatches(model: string) {
 	};
 
 	swilibAddr(model, config);
-	getUnusedExtRam(model, config);
-	llInit(model, config);
-	noIdleRestartOnSimError(model, config);
-	socketsRaceConditionsBug(model, config);
+	await getUnusedExtRam(model, config);
+	await llInit(model, config);
+	await dtraceWrite(model, config);
+	await noIdleRestartOnSimError(model, config);
+	await socketsRaceConditionsBug(model, config);
 
 	console.log(`[${model}]`);
 	console.log(config);
@@ -109,6 +110,19 @@ function updateConfig(file: string, data: string) {
 	fs.writeFileSync(file, text);
 }
 
+async function dtraceWrite(model: string, config: ELFPackConfig) {
+	const found = [
+		...await findPatternAll(model, ptr.DTRACE_WRITE_SGOLD_A),
+		...await findPatternAll(model, ptr.DTRACE_WRITE_SGOLD_B),
+		...await findPatternAll(model, ptr.DTRACE_WRITE_NSG),
+	];
+
+	if (found.length != 1)
+		throw new Error(`Expected one DTrace_WriteRaw for ${model}, found ${found.length}`);
+
+	config.functions.DTrace_WriteRaw = sprintf("0x%08X", found[0].address);
+}
+
 function swilibAddr(model: string, config: ELFPackConfig) {
 	if (!ptr.SWILIB[model])
 		throw new Error(`SWILIB addr not found for ${model}`);
@@ -134,38 +148,38 @@ function swilibAddr(model: string, config: ELFPackConfig) {
 	}
 }
 
-function noIdleRestartOnSimError(model: string, config: ELFPackConfig) {
-	const foundNsg = findPattern(model, ptr.NO_RESTART_ON_SIM_ERROR_NSG);
+async function noIdleRestartOnSimError(model: string, config: ELFPackConfig) {
+	const foundNsg = await findPattern(model, ptr.NO_RESTART_ON_SIM_ERROR_NSG);
 	if (foundNsg) {
-		config.xcl.PATCH_NO_IDLE_RESTART = sprintf("%08X-%08X", foundNsg.value, foundNsg.value + 0x18 - 1);
-		config.functions.B_SkipSimErrorPopup = sprintf("0x%08X+1", (foundNsg.value + 0x18));
+		config.xcl.PATCH_NO_IDLE_RESTART = sprintf("%08X-%08X", foundNsg.address, foundNsg.address + 0x18 - 1);
+		config.functions.B_SkipSimErrorPopup = sprintf("0x%08X+1", (foundNsg.address + 0x18));
 		return;
 	}
 
-	const foundElka = findPattern(model, ptr.NO_RESTART_ON_SIM_ERROR_ELKA) || findPattern(model, ptr.NO_RESTART_ON_SIM_ERROR_ELKA_V2);
+	const foundElka = await findPattern(model, ptr.NO_RESTART_ON_SIM_ERROR_ELKA) || await findPattern(model, ptr.NO_RESTART_ON_SIM_ERROR_ELKA_V2);
 	if (foundElka) {
-		config.xcl.PATCH_NO_IDLE_RESTART = sprintf("%08X-%08X", foundElka.value, foundElka.value + 0x14 - 1);
+		config.xcl.PATCH_NO_IDLE_RESTART = sprintf("%08X-%08X", foundElka.address, foundElka.address + 0x14 - 1);
 		return;
 	}
 }
 
-function llInit(model: string, config: ELFPackConfig) {
-	const foundInjectPlace = findPattern(model, ptr.LL_INIT_NSG);
-	const foundOldFunc = findPattern(model, ptr.LL_INIT_OLD_FUNC_NSG);
+async function llInit(model: string, config: ELFPackConfig) {
+	const foundInjectPlace = await findPattern(model, ptr.LL_INIT_NSG);
+	const foundOldFunc = await findPattern(model, ptr.LL_INIT_OLD_FUNC_NSG);
 
 	if (!foundInjectPlace || !foundOldFunc)
 		return;
 
-	config.functions.OldFuncInOsInit = sprintf("0x%08X", foundOldFunc.value);
-	config.xcl.PATCH_LL_INIT_HOOK = sprintf("%08X-%08X", foundInjectPlace.value, foundInjectPlace.value + 4 - 1);
+	config.functions.OldFuncInOsInit = sprintf("0x%08X", foundOldFunc.address);
+	config.xcl.PATCH_LL_INIT_HOOK = sprintf("%08X-%08X", foundInjectPlace.address, foundInjectPlace.address + 4 - 1);
 }
 
-function getUnusedExtRam(model: string, config: ELFPackConfig) {
-	const found = findPattern(model, ptr.UNUSED_RAM_NSG);
+async function getUnusedExtRam(model: string, config: ELFPackConfig) {
+	const found = await findPattern(model, ptr.UNUSED_RAM_NSG);
 	if (!found)
 		return null;
 
-	let freeMemPtr = found.value + 0xDD0;
+	let freeMemPtr = found.address + 0xDD0;
 	freeMemPtr &= ~0xFF;
 	freeMemPtr += 0xC00;
 
@@ -174,10 +188,10 @@ function getUnusedExtRam(model: string, config: ELFPackConfig) {
 	return freeMemPtr;
 }
 
-function socketsRaceConditionsBug(model: string, config: ELFPackConfig) {
-	const found = findPatternAll(model, ptr.SOCKETS_ERROR_EBSD_CHECK);
-	const found2 = findPatternAll(model, ptr.SOCKETS_ERROR_EBSD_CHECK_V2);
-	const nuSleepFound = findPattern(model, ptr.NU_SLEEP_FUNC_NSG);
+async function socketsRaceConditionsBug(model: string, config: ELFPackConfig) {
+	const found = await findPatternAll(model, ptr.SOCKETS_ERROR_EBSD_CHECK);
+	const found2 = await findPatternAll(model, ptr.SOCKETS_ERROR_EBSD_CHECK_V2);
+	const nuSleepFound = await findPattern(model, ptr.NU_SLEEP_FUNC_NSG);
 	if (!found || !nuSleepFound)
 		return;
 
@@ -191,17 +205,17 @@ function socketsRaceConditionsBug(model: string, config: ELFPackConfig) {
 
 	for (let i = 0; i < functions.length; i++) {
 		const funcName = functions[i];
-		config.xcl[`PATCH_SOCKET_FUNC_${funcName.toUpperCase()}`] = sprintf("%08X-%08X", found[i].value, found[i].value + 32 - 1);
-		config.functions[`B_SocketFunc${ucfirst(funcName)}ReadStatus`] = sprintf("0x%08X+1", (found[i].value - 2));
-		config.functions[`B_SocketFunc${ucfirst(funcName)}ExitLoop`] = sprintf("0x%08X+1", (found[i].value + 32));
+		config.xcl[`PATCH_SOCKET_FUNC_${funcName.toUpperCase()}`] = sprintf("%08X-%08X", found[i].address, found[i].address + 32 - 1);
+		config.functions[`B_SocketFunc${ucfirst(funcName)}ReadStatus`] = sprintf("0x%08X+1", (found[i].address - 2));
+		config.functions[`B_SocketFunc${ucfirst(funcName)}ExitLoop`] = sprintf("0x%08X+1", (found[i].address + 32));
 	}
 
 	for (let i = 0; i < functions2.length; i++) {
 		const funcName = functions2[i];
-		config.xcl[`PATCH_SOCKET_FUNC_${funcName.toUpperCase()}`] = sprintf("%08X-%08X", found2[i].value, found2[i].value + 32 - 1);
-		config.functions[`B_SocketFunc${ucfirst(funcName)}ReadStatus`] = sprintf("0x%08X+1", (found2[i].value - 2));
-		config.functions[`B_SocketFunc${ucfirst(funcName)}ExitLoop`] = sprintf("0x%08X+1", (found2[i].value + 32));
+		config.xcl[`PATCH_SOCKET_FUNC_${funcName.toUpperCase()}`] = sprintf("%08X-%08X", found2[i].address, found2[i].address + 32 - 1);
+		config.functions[`B_SocketFunc${ucfirst(funcName)}ReadStatus`] = sprintf("0x%08X+1", (found2[i].address - 2));
+		config.functions[`B_SocketFunc${ucfirst(funcName)}ExitLoop`] = sprintf("0x%08X+1", (found2[i].address + 32));
 	}
 
-	config.functions.NU_Sleep = sprintf("0x%08X", nuSleepFound.value);
+	config.functions.NU_Sleep = sprintf("0x%08X", nuSleepFound.address);
 }
