@@ -5,6 +5,8 @@
 #ifndef __SWILIB__
 #define __SWILIB__
 
+#include <stdarg.h>
+
 typedef unsigned int size_t;
 typedef long time_t;
 typedef unsigned int u_int32_t;
@@ -3576,5 +3578,16 @@ __swi __arm void SetHeaderText(void *hdr_pointer, WSHDR *txt, void *malloc_adr, 
 //thumb
 //pattern_NSG=??,B5,??,1C,??,1C,??,1C,??,1C,??,28,??,D0,??,2E,??,D0,??,2D,??,D0,??,6A,??,28,??,D0,??,??,??,??,??,90,??,28,??,D0,??,1C,??,6A+1
 
+
+#pragma diag_suppress=Ta036
+
+#pragma swi_number=0x3FE
+__swi __arm int vsprintf(char *buffer, const char *format, va_list args);
+
+#pragma swi_number=0x3FF
+__swi __arm int vsnprintf(char *buffer, size_t capacity,
+                          const char *format, va_list args);
+
+#pragma diag_default=Ta036
 
 #endif

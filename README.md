@@ -1,4 +1,9 @@
 # Changelog
+## 2026.09.29 - [@Azq2](https://github.com/Azq2)
+1. Новые функции:
+    - 401: DTrace_Printf
+    - 402: DTrace_Write
+
 ## 2026.01.24 - [@Azq2](https://github.com/Azq2)
 1. Новые функции:
     - 400: BCFG_GetDefaultDisk

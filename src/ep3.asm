@@ -38,5 +38,9 @@
 
         RSEG	SWILIB_FUNC400:CODE
         EXTERN  BCFG_GetDefaultDisk
+        EXTERN  DTrace_Printf
+        EXTERN  DTrace_Write
 
         DCD BCFG_GetDefaultDisk
+        DCD DTrace_Printf
+        DCD DTrace_Write
